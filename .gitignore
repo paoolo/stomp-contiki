@@ -11,3 +11,4 @@ Makefile.target
 doc/html
 patches-*
 tools/tunslip6
+.svn
