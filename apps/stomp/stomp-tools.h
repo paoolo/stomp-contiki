@@ -8,15 +8,16 @@
 #ifndef TOOLS_H_
 #define TOOLS_H_
 
-/* Zmodyfikowane kopiowanie stringa (z tworzeniem nowego string'a) */
-char* _tools_strcpy(char *str);
+/* Create new string and copy */
+char* stomp_tools_strcpy(char *str);
 
-/* Zmodyfikowane laczenie dwoch stringow (z tworzeniem nowego string'a) */
-char* _tools_strcat(char *dst, char *src);
+/* Create new string and concat both */
+char* stomp_tools_strcat(char *dst, char *src);
 
-/* Zmodyfikowane wydzielanie kolejnych elementow string'a oddzielonych delim'em.
- * Modyfikuje przekazywany parametr str, przesuwa o ilosc odciety znakow, zwracanych
- * przez funkcje. */
-char* _tools_strtok(char **str, char delim);
+/* Get next token splited by delim */
+char* stomp_tools_strtok(char **str, char delim);
+
+/* Copy N characters */
+char* stomp_tools_strncpy(char *dest, const char *src, size_t n);
 
 #endif /* TOOLS_H_ */

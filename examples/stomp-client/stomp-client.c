@@ -48,7 +48,7 @@ PROCESS_THREAD(program, ev, data) {
 	/* Obiekt polaczenia z serwerem */
 	network_conn_t *conn;
 	/* Ramka, ktora odbiore */
-	frame_t *frame;
+	stomp_frame_t *frame;
 
 	/* Ustawienie uIP stack */
 	uip_init();

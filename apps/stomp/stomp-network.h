@@ -1,72 +1,78 @@
-#include "stomp-frame.h"
-
 #include "contiki-net.h"
 
-/*
- * network.h
- *
- *  Created on: 24-03-2012
- *      Author: paoolo
- */
+#include "stomp-frame.h"
 
 #ifndef NETWORK_H_
 #define NETWORK_H_
 
-/* Okreslenie protokolu wykorzystywanego w komunikacji, podawane
- * jako type do funkcji _connect() */
-#define _NETWORK_TYPE_TCP 0
-#define _NETWORK_TYPE_UDP 1
+#ifndef NULL
+#define NULL (void *)0
+#endif /* NULL */
 
-/* Struktura przechowujaca informacje o polaczeniu */
-struct _network_conn_t {
-	/* Obiekt polaczenia TCP */
-	struct uip_conn *conn;
-	/* Obiekt polaczenia UDP */
-	struct uip_udp_conn *conn_udp;
-	/* Typ polaczenia TCP lub UDP */
-	int type;
-	/* Port uzywany w polaczeniu */
-	int port;
-	/* Nazwa hosta, z ktorym jest polaczenie */
-	char *host;
-	/* Adres IP, w postaci zrozumiałej dla contiki */
-#if UIP_CONF_IPV6 > 0
-	uint16_t *addr;
-#else
-	uint8_t *addr;
+#define FLAG_CLOSE 1
+#define FLAG_ABORT 2
+
+#ifdef	__cplusplus
+extern "C" {
 #endif
 
-};
+    struct stomp_network_state
+    {
+        struct uip_conn *conn;
 
-typedef struct _network_conn_t network_conn_t;
+        uip_ipaddr_t *address;
+        uint16_t port;
+        
+        unsigned char flags;
+        char *buffer;
+        uint16_t bufferlen;
+        uint16_t sentlen;
+    };
 
-/* Zamyka polaczenia, przy okazji usuwa obiekt polaczenia, wraz z zaleznosciami */
-void _network_disconnect(network_conn_t *conn);
+    void stomp_network_app(void *s);
 
-/* Uzyskania polaczenia z serwerem, wymagane jest podanie nazwy serwera
- * do ktore sie podlaczamy, numer portu, wskazanie z ktorego protokolu
- * korzystamy oraz (opcjonalnie) obiekt polaczenia. Zwracany jest
- * wypelniony obiekt polaczenia (w razie powodzenia) lub NULL (w razie
- * niepowodzenia). */
-network_conn_t* _network_connect(char *host, int port, int type,
-		network_conn_t *conn);
+    struct stomp_network_state* 
+    stomp_network_connect(struct stomp_network_state *s, uip_ipaddr_t *addr, uint16_t port);
 
-#if UIP_CONF_IPV6 > 0
-/* Uzyskanie polaczenia z serwerem, podanie adresu IP w postaci numerycznej */
-void _network_connect_ip(uint16_t *addr, int port, int type,
-		network_conn_t *conn);
-#else
-void _network_connect_ip(uint8_t *addr, int port, int type,
-		network_conn_t *conn);
+    unsigned char
+    stomp_network_send(struct stomp_network_state *s, char *buf, uint16_t len);
+
+    unsigned char
+    stomp_network_close(struct stomp_network_state *s);
+
+    unsigned char
+    stomp_network_abort(struct stomp_network_state *s);
+
+    /*
+     * Callbacks, must be implemented.
+     */
+
+    /* TODO protocol negotation and registering to server */
+    void
+    stomp_network_connected(struct stomp_network_state *s);
+
+    /* TODO notyfing about sent message to server */
+    void
+    stomp_network_sent(struct stomp_network_state *s);
+
+    /* TODO parsing frame and to do something with this */
+    void
+    stomp_network_received(struct stomp_network_state *s);
+
+    /* TODO clean up session */
+    void
+    stomp_network_closed(struct stomp_network_state *s);
+
+    /* TODO notifing about aborted connection */
+    void
+    stomp_network_aborted(struct stomp_network_state *s);
+
+    /* TODO notifing about timedout connection */
+    void
+    stomp_network_timedout(struct stomp_network_state *s);
+
+#ifdef	__cplusplus
+}
 #endif
-
-/* Wyslanie ramki, wymagane jest podanie obiektu ramki do wyslania oraz
- * obiekt polaczenia, przez ktore chcemy wyslac ramke. */
-void _network_send_frame(frame_t *frame, network_conn_t *conn);
-
-/* Odebranie ramki, wymagane jest podanie obiektu polaczenia, skad
- * moze nadejsc ramka. W przypadku powodzenia zostanie ona zwrocona.
- * W przypadku bledu, zostanie zwrocony NULL. */
-frame_t* _network_recv_frame(network_conn_t *conn);
 
 #endif /* NETWORK_H_ */

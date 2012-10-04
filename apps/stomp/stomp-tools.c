@@ -13,80 +13,98 @@
  *      Author: paoolo
  */
 
-char* _tools_strcpy(char *str) {
-	char *ret = NULL;
+char*
+stomp_tools_strcpy(char *str) {
+    char *ret = NULL;
 
-	if (str != NULL) {
-		ret = (char*) _deref(_new_ref(sizeof(char) * (strlen(str) +1)));
+    if (str != NULL) {
+        ret = (char*) _deref(_new_ref(sizeof(char) * (strlen(str) +1)));
 
-		strcpy(ret, str);
-	}
+        strcpy(ret, str);
+    }
 
-	return ret;
+    return ret;
 }
 
-char* _tools_strcat(char *dst, char *src) {
-	int size = -1;
-	char *ret = NULL;
+char*
+stomp_tools_strcat(char *dst, char *src) {
+    int size = -1;
+    char *ret = NULL;
 
-	if (dst == NULL && src != NULL) {
-		size = sizeof(char) * strlen(src);
-		ret = (char*) _deref(_new_ref(size+1));
+    if (dst == NULL && src != NULL) {
+        size = sizeof(char) * strlen(src);
+        ret = (char*) _deref(_new_ref(size+1));
 
-		strcpy(ret, src);
+        strcpy(ret, src);
 
-	} else if (dst != NULL && src == NULL) {
-		size = sizeof(char) * strlen(dst);
-		ret = (char*) _deref(_new_ref(size+1));
+    } else if (dst != NULL && src == NULL) {
+        size = sizeof(char) * strlen(dst);
+        ret = (char*) _deref(_new_ref(size+1));
 
-		strcpy(ret, dst);
+        strcpy(ret, dst);
 
-	} else if (dst != NULL && src != NULL) {
-		size = sizeof(char) * (strlen(dst) + strlen(src));
-		ret = (char*) _deref(_new_ref(size+1));
+    } else if (dst != NULL && src != NULL) {
+        size = sizeof(char) * (strlen(dst) + strlen(src));
+        ret = (char*) _deref(_new_ref(size+1));
 
-		strcpy(ret, dst);
-		strcat(ret, src);
-	}
+        strcpy(ret, dst);
+        strcat(ret, src);
+    }
 
-	return ret;
+    return ret;
 }
 
-char* _tools_strtok(char **str, char delim) {
-	char *data = NULL, *tmp = NULL;
-	ssize_t i = 0, len = 0;
+char*
+stomp_tools_strtok(char **str, char delim) {
+    char *data = NULL, *tmp = NULL;
+    ssize_t i = 0, len = 0;
 
-	while (str != NULL
-			&& *str != NULL
-			&& *str + i != NULL
-			&& *(*str + i) != delim
-			&& *(*str + i) != '\0') {
-		i = i + 1;
-	}
+    while (str != NULL
+            && *str != NULL
+            && *str + i != NULL
+            && *(*str + i) != delim
+            && *(*str + i) != '\0') {
+        i = i + 1;
+    }
 
-	if (str != NULL
-			&& *str != NULL
-			&& *str + i != NULL
-			&& (*(*str + i) == delim
-					|| *(*str + i) == '\0')) {
+    if (str != NULL
+            && *str != NULL
+            && *str + i != NULL
+            && (*(*str + i) == delim
+                            || *(*str + i) == '\0')) {
 
-		data = (char*) _deref(_new_ref(sizeof(char) * (i + 1)));
+        data = (char*) _deref(_new_ref(sizeof(char) * (i + 1)));
 
-		strncpy(data, *str, i);
+        strncpy(data, *str, i);
 
-		if (*(*str + i) != '\0') {
-			len = strlen(*str + i + 1);
+        if (*(*str + i) != '\0') {
+            len = strlen(*str + i + 1);
 
-			tmp = (char*) _deref(_new_ref(sizeof(char) * (len + 1)));
+            tmp = (char*) _deref(_new_ref(sizeof(char) * (len + 1)));
 
-			strncpy(tmp, *str + i + 1, len);
+            strncpy(tmp, *str + i + 1, len);
 
-			/* FIXME to jest nadal bug! */
-			/* _del_ref(*__str); */
+            /* FIXME It is still a big BUG!! */
+            /* _del_ref(*__str); */
 
-			*str = tmp;
-		}
-	}
+            *str = tmp;
+        }
+    }
 
-	return data;
+    return data;
+}
+
+char*
+stomp_tools_strncpy(char *dest, const char *src, size_t n)
+{
+    size_t len;
+
+    len = strlen(src);
+    strncpy(dest, src, n);
+
+    if(len > n) {
+        return dest + n;
+    } else {
+        return dest + len;
+    }
 }

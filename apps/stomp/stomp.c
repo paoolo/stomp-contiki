@@ -1,6 +1,7 @@
 #include "stomp.h"
 
 #include "contiki.h"
+#include "shell.h"
 #include "contiki-net.h"
 
 #include "stomp-memguard.h"
@@ -9,6 +10,7 @@
 #include "stomp-frame.h"
 
 #include <string.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -112,19 +114,19 @@ network_conn_t* stomp_connect(char* host, uint8_t *host_ip, int port, int type,
 
 	/* Obiekt ramki CONNECT, jaka zostanie wyslana jako pierwsza, cele wykonania
 	 * polaczenia z serwerem. */
-	frame_t *connect_frame;
+	stomp_frame_t *connect_frame;
 	/* Obiekt ramke CONNECTED lub ERROR, zwroconej przez serwer */
-	frame_t *__received_frame;
+	stomp_frame_t *__received_frame;
 
 	/* Przygotowanie odpowiednich naglowkow:
 	 * dla wersji akceptowanych przez klienta */
-	frame_header_t *__accept_version_header;
+	stomp_header_t *__accept_version_header;
 	/* dla nazwy hosta do ktorego klient chce sie podlaczyc */
-	frame_header_t *__host_header;
+	stomp_header_t *__host_header;
 	/* login klienta  */
-	frame_header_t *__login_header;
+	stomp_header_t *__login_header;
 	/* haslo klienta  */
-	frame_header_t *__password_header;
+	stomp_header_t *__password_header;
 
 	/* Utworzenie obiektu poleczenia z serwerem, ktory to obiekt zostanie zwrocony */
 	conn = _network_connect_ip(host_ip, port, type, NULL);
@@ -137,13 +139,13 @@ network_conn_t* stomp_connect(char* host, uint8_t *host_ip, int port, int type,
 	}
 
 	/* Ustawienie naglowkow */
-	__accept_version_header = _frame_new_header(_FRAME_HEADER_ACCEPT_VERSION, "1.1");
-	__host_header = _frame_new_header(_FRAME_HEADER_HOST, host);
+	__accept_version_header = stomp_frame_new_header(_FRAME_HEADER_ACCEPT_VERSION, "1.1");
+	__host_header = stomp_frame_new_header(_FRAME_HEADER_HOST, host);
 
 	/* W przypadku zastosowania autentykacji */
 	if (auth_enable > 0) {
-		__login_header = _frame_new_header(_FRAME_HEADER_LOGIN, login);
-		__password_header = _frame_new_header(_FRAME_HEADER_PASSCODE, password);
+		__login_header = stomp_frame_new_header(_FRAME_HEADER_LOGIN, login);
+		__password_header = stomp_frame_new_header(_FRAME_HEADER_PASSCODE, password);
 	}
 
 	/* Utworzenie listy naglowkow */
@@ -155,16 +157,16 @@ network_conn_t* stomp_connect(char* host, uint8_t *host_ip, int port, int type,
 	
 	/* Utworzenie ramki CONNECT */
 	if (auth_enable > 0) {
-		connect_frame = _frame_new_frame(_FRAME_CMD_CONNECT, __login_header, "\n");
+		connect_frame = stomp_frame_new_frame(_FRAME_CMD_CONNECT, __login_header, "\n");
 	} else {
-		connect_frame = _frame_new_frame(_FRAME_CMD_CONNECT, __host_header, "\n");
+		connect_frame = stomp_frame_new_frame(_FRAME_CMD_CONNECT, __host_header, "\n");
 	}
 
 	/* Wyslanie ramki CONNECT */
 	_network_send_frame(connect_frame, conn);
 
 	/* Zwolnienie zasobow wykorzystywanych przez ramke */
-	_frame_delete_frame(connect_frame);
+	stomp_frame_delete_frame(connect_frame);
 
 	/* Oczekiwanie na odebranie ramki od serwera. Gdy serwer znajdzie, wsrod obslugiwanych
 	 * przez klienta wersje, odsyla ramke CONNECTED. Jesli nie, to ramke ERROR. */
@@ -175,20 +177,20 @@ network_conn_t* stomp_connect(char* host, uint8_t *host_ip, int port, int type,
 	/* Sprawdzamy, czy nie dostalismy ramki ERROR */
 	if (__received_frame != NULL && strcmp(__received_frame->command, _FRAME_CMD_ERROR) == 0){
 		/* Odszukanie pola naglowka message */
-		frame_header_t *__frame_header_t = _frame_find_header(
+		stomp_header_t *__frame_header_t = stomp_frame_find_header(
 				_FRAME_HEADER_MESSAGE_H, __received_frame);
 
         printf("_error_ ERROR frame message %s\n", __frame_header_t->value);
         /* TOOD powiadomic o otrzymaniu ramki ERROR */
 
 		/* Zwolnienie zasobow */
-		_frame_delete_frame(__received_frame);
+		stomp_frame_delete_frame(__received_frame);
 
 		/* FIXME sygnalizacja wystapienia bledu */
 		return NULL;
 	} else {
 		/* Zwolnienie zasobow */
-		_frame_delete_frame(__received_frame);
+		stomp_frame_delete_frame(__received_frame);
 
 		/* Zwracmy obiekt polaczenia */
 		return conn;
@@ -236,15 +238,15 @@ network_conn_t* stomp_connect(char* host, uint8_t *host_ip, int port, int type,
 void stomp_send(char *__dest, char *__value, network_conn_t *__conn) {
 
 	/* Utworzenie ramki, ktora bedzie wysylana na serwer */
-	frame_t *__frame;
+	stomp_frame_t *__frame;
 
 	/* Przygotowanie odpowiednich naglowkow:
 	 * dla destination */
-	frame_header_t *__dest_header;
+	stomp_header_t *__dest_header;
 	/* dla content-length */
-	frame_header_t *__content_length_header;
+	stomp_header_t *__content_length_header;
 	/* dla content-type */
-	frame_header_t *__content_type_header;
+	stomp_header_t *__content_type_header;
 
 	/* Bufor na wartosc dlugosci danych */
 	char __len_string[4];
@@ -255,22 +257,22 @@ void stomp_send(char *__dest, char *__value, network_conn_t *__conn) {
 	sprintf(__len_string, "%d", __len_int);
 
 	/* Ustawienie naglowkow */
-	__dest_header = _frame_new_header(_FRAME_HEADER_DESTINATION, __dest);
-	__content_length_header = _frame_new_header(_FRAME_HEADER_CONTENT_LENGTH, __len_string);
-	__content_type_header = _frame_new_header(_FRAME_HEADER_CONTENT_TYPE, TEXT_PLAIN);
+	__dest_header = stomp_frame_new_header(_FRAME_HEADER_DESTINATION, __dest);
+	__content_length_header = stomp_frame_new_header(_FRAME_HEADER_CONTENT_LENGTH, __len_string);
+	__content_type_header = stomp_frame_new_header(_FRAME_HEADER_CONTENT_TYPE, TEXT_PLAIN);
 
 	/* Ustawienie listy pol naglowkow */
 	__dest_header->next = __content_length_header;
 	__content_length_header->next = __content_type_header;
 
 	/* Ustawienie typu ramki, naglowkow i payloadu */
-	__frame = _frame_new_frame(_FRAME_CMD_SEND, __dest_header, __value);
+	__frame = stomp_frame_new_frame(_FRAME_CMD_SEND, __dest_header, __value);
 
 	/* Wyslanie ramki */
 	_network_send_frame(__frame, __conn);
 
 	/* Zwolnienie zasobow */
-	_frame_delete_frame(__frame);
+	stomp_frame_delete_frame(__frame);
 
 	/* FIXME obsluga ramki z serwera o komunikacie bledu, czyli ERROR
 	 * oraz obslugi zakonczenia polaczenia z klientem. */
@@ -334,38 +336,38 @@ void stomp_send(char *__dest, char *__value, network_conn_t *__conn) {
 void stomp_subscribe(int __id, char *__dest, char *__ack_mode, network_conn_t *__conn) {
 
 	/* Utworzenie ramki, ktora bedzie wysylana na serwer */
-	frame_t *__frame;
+	stomp_frame_t *__frame;
 
 	/* Przygotowanie odpowiednich naglowkow:
 	 * dla identyfikatora */
-	frame_header_t *__id_header;
+	stomp_header_t *__id_header;
 	/* dla destination, czyli kolejki, do ktorej klient chce
 	 * sie przypisac */
-	frame_header_t *__desination_header;
+	stomp_header_t *__desination_header;
 	/* dla pola ack */
-	frame_header_t *__ack_header;
+	stomp_header_t *__ack_header;
 
 	char _id_string[4];
 	memset(_id_string, 0, sizeof(char) * 4);
 	sprintf(_id_string, "%d", __id);
 
 	/* Utworzenie kolejnych naglowkow ramki */
-	__id_header = _frame_new_header(_FRAME_HEADER_ID, _id_string);
-	__desination_header = _frame_new_header(_FRAME_HEADER_DESTINATION, __dest);
-	__ack_header = _frame_new_header(_FRAME_HEADER_ACK_MODE, __ack_mode);
+	__id_header = stomp_frame_new_header(_FRAME_HEADER_ID, _id_string);
+	__desination_header = stomp_frame_new_header(_FRAME_HEADER_DESTINATION, __dest);
+	__ack_header = stomp_frame_new_header(_FRAME_HEADER_ACK_MODE, __ack_mode);
 
 	/* Utworzenie listy naglowkow */
 	__id_header->next = __desination_header;
 	__desination_header->next = __ack_header;
 
 	/* Ustawienie typu ramki, pol naglowka i payloadu */
-	__frame = _frame_new_frame(_FRAME_CMD_SUBSCRIBE, __id_header, "\n");
+	__frame = stomp_frame_new_frame(_FRAME_CMD_SUBSCRIBE, __id_header, "\n");
 
 	/* Wyslanie ramki */
 	_network_send_frame(__frame, __conn);
 
 	/* Zwolnienie zasobow */
-	_frame_delete_frame(__frame);
+	stomp_frame_delete_frame(__frame);
 
 	/* FIXME obsluga ramki z serwera o komunikacie bledu, czyli ERROR
 	 * oraz obslugi zakonczenia polaczenia z klientem. Po zapisaniu sie
@@ -389,27 +391,27 @@ void stomp_subscribe(int __id, char *__dest, char *__ack_mode, network_conn_t *_
 void stomp_unsubscribe(int __id, network_conn_t *__conn) {
 
 	/* Utworzenie ramki, ktora bedzie wysylana na serwer */
-	frame_t *__frame;
+	stomp_frame_t *__frame;
 
 	/* Przygotowanie odpowiednich naglowkow:
 	 * dla identyfikatora */
-	frame_header_t *__id_header;
+	stomp_header_t *__id_header;
 
 	char _id_string[4];
 	memset(_id_string, 0, sizeof(char) * 4);
 	sprintf(_id_string, "%d", __id);
 
 	/* Ustawienie wartosci naglowka dla id */
-	__id_header = _frame_new_header(_FRAME_HEADER_ID, _id_string);
+	__id_header = stomp_frame_new_header(_FRAME_HEADER_ID, _id_string);
 
 	/* Ustawienie typu ramki, pol naglowka i payloadu */
-	__frame = _frame_new_frame(_FRAME_CMD_UNSUBSCRIBE, __id_header, "\n");
+	__frame = stomp_frame_new_frame(_FRAME_CMD_UNSUBSCRIBE, __id_header, "\n");
 
 	/* Wyslanie ramki */
 	_network_send_frame(__frame, __conn);
 
 	/* Zwolnienie zasobow */
-	_frame_delete_frame(__frame);
+	stomp_frame_delete_frame(__frame);
 
 	/* FIXME czy tutaj jest potrzeba obslugi ERROR wiadomosci od serwera? */
 }
@@ -422,15 +424,15 @@ void _stomp_nack_ack(char *_frame_cmd, int __subscription, int __message_id,
 		char *__transaction, network_conn_t *__conn) {
 
 	/* Utworzenie ramki, ktora bedzie wysylana na serwer */
-	frame_t *__frame;
+	stomp_frame_t *__frame;
 
 	/* Przygotowanie odpowiednich naglowkow:
 	 * dla identyfikatora */
-	frame_header_t *__subscription_header;
+	stomp_header_t *__subscription_header;
 	/* dla message id */
-	frame_header_t *__message_id_header;
+	stomp_header_t *__message_id_header;
 	/* dla transaction */
-	frame_header_t *__transaction_header;
+	stomp_header_t *__transaction_header;
 
 	/* String z numeru subskrycji */
 	char __subscription_string[4];
@@ -444,22 +446,22 @@ void _stomp_nack_ack(char *_frame_cmd, int __subscription, int __message_id,
 	sprintf(__message_id_string, "%d", __message_id);
 
 	/* Przygotowanie pol naglowkow */
-	__subscription_header = _frame_new_header(_FRAME_HEADER_ID, __subscription_string);
-	__message_id_header = _frame_new_header(_FRAME_HEADER_MESSAGE_ID, __message_id_string);
-	__transaction_header = _frame_new_header(_FRAME_HEADER_TRANSACTION, __transaction);
+	__subscription_header = stomp_frame_new_header(_FRAME_HEADER_ID, __subscription_string);
+	__message_id_header = stomp_frame_new_header(_FRAME_HEADER_MESSAGE_ID, __message_id_string);
+	__transaction_header = stomp_frame_new_header(_FRAME_HEADER_TRANSACTION, __transaction);
 
 	/* Utworzenie listy pol naglowkow */
 	__subscription_header->next = __message_id_header;
 	__message_id_header->next = __transaction_header;
 
 	/* Utworzenie obiektu ramki */
-	__frame = _frame_new_frame(_frame_cmd, __subscription_header, "\n");
+	__frame = stomp_frame_new_frame(_frame_cmd, __subscription_header, "\n");
 
 	/* Wyslanie ramki */
 	_network_send_frame(__frame, __conn);
 
 	/* Zwolnienie zasobow */
-	_frame_delete_frame(__frame);
+	stomp_frame_delete_frame(__frame);
 
 	/* FIXME czy tutaj jest potrzeba obslugi ERROR wiadomosci od serwera? */
 }
@@ -521,23 +523,23 @@ void stomp_nack(int __subscription, int __message_id, char *__transaction, netwo
 void _stomp_begin_commit_abort(char *__frame_cmd, char *__transaction, network_conn_t *__conn) {
 
 	/* Utworzenie ramki, ktora bedzie wysylana na serwer */
-	frame_t *__frame;
+	stomp_frame_t *__frame;
 
 	/* Przygotowanie odpowiednich naglowkow:
 	 * dla transaction */
-	frame_header_t *__transaction_header;
+	stomp_header_t *__transaction_header;
 
 	/* Utworzenie pola naglowka */
-	__transaction_header = _frame_new_header(_FRAME_HEADER_TRANSACTION, __transaction);
+	__transaction_header = stomp_frame_new_header(_FRAME_HEADER_TRANSACTION, __transaction);
 
 	/* Utworzenie obiektu ramki */
-	__frame = _frame_new_frame(__frame_cmd, __transaction_header, "\n");
+	__frame = stomp_frame_new_frame(__frame_cmd, __transaction_header, "\n");
 
 	/* Wyslanie ramki */
 	_network_send_frame(__frame, __conn);
 
 	/* Zwolnienie zasobow */
-	_frame_delete_frame(__frame);
+	stomp_frame_delete_frame(__frame);
 
 	/* FIXME czy tutaj jest potrzeba obslugi ERROR wiadomosci od serwera? */
 }
@@ -633,11 +635,11 @@ void stomp_abort(char *__transaction, network_conn_t *__conn) {
 void stomp_disconnect(int __receipt, network_conn_t *__conn) {
 
 	/* Ramka, ktora zostanie wykorzystana do wyslania komunikatu o rozlaczeniu */
-	frame_t *__frame;
+	stomp_frame_t *__frame;
 
 	/* Przygotowanie odpowiednich naglowkow:
 	 * dla receipt */
-	frame_header_t *__receipt_header;
+	stomp_header_t *__receipt_header;
 
 	/* Konwersja zmiennej int na string */
 	char __receipt_string[4];
@@ -645,16 +647,16 @@ void stomp_disconnect(int __receipt, network_conn_t *__conn) {
 	sprintf(__receipt_string, "%04d", __receipt);
 
 	/* Utworzenie pola naglowka */
-	__receipt_header = _frame_new_header(_FRAME_HEADER_RECEIPT_REQUESTED, __receipt_string);
+	__receipt_header = stomp_frame_new_header(_FRAME_HEADER_RECEIPT_REQUESTED, __receipt_string);
 
 	/* Utworzenie ramki */
-	__frame = _frame_new_frame(_FRAME_CMD_DISCONNECT, __receipt_header, "\n");
+	__frame = stomp_frame_new_frame(_FRAME_CMD_DISCONNECT, __receipt_header, "\n");
 
 	/* Wyslanie ramki */
 	_network_send_frame(__frame, __conn);
 
 	/* Zwolnienie zasobow */
-	_frame_delete_frame(__frame);
+	stomp_frame_delete_frame(__frame);
 
 	/* Oczekiwanie na ramke RECEIPT i po niej nastepuje rozlaczenie fizyczne
 	 * FIXME bug w tym miejscu polega na tym, ze nie powinno sie korzystac z warstwy
@@ -664,7 +666,7 @@ void stomp_disconnect(int __receipt, network_conn_t *__conn) {
 	__frame = _network_recv_frame(__conn);
 
 	/* Wyszukwanie naglowka z receipt id */
-	__receipt_header = _frame_find_header(_FRAME_HEADER_RECEIPT_ID, __frame);
+	__receipt_header = stomp_frame_find_header(_FRAME_HEADER_RECEIPT_ID, __frame);
 
 	/* Weryfikacja ramki */
 	if(strcmp(__frame->command, _FRAME_CMD_RECEIPT) == 0 && __receipt_header != NULL
@@ -679,4 +681,98 @@ void stomp_disconnect(int __receipt, network_conn_t *__conn) {
 
 	/* Zamykniecie fizyczne polaczenia */
 	_network_disconnect(__conn);
+}
+
+#define FLAG_CLOSE 1
+#define FLAG_ABORT 2
+
+struct stomp_state*
+stomp_connect(struct stomp_state *state, uip_ipaddr_t *addr, uint16_t port)
+{
+    struct uip_conn *conn;
+    
+    conn = tcp_connect(*addr, uip_htons(port), state);
+    if (conn == NULL) {
+        return NULL;
+    }
+    return state;
+}
+
+unsigned char
+stomp_disconnect(struct stomp_state *state)
+{
+    state->flags = FLAG_CLOSE;
+    if (state->text != NULL) {
+        return 1;
+    }
+    return 0;
+}
+
+unsigned char
+stomp_send(struct stomp_state *state, stomp_frame_t *frame)
+{
+    if (state->text != NULL) {
+        return 1;
+    }
+    state->text = stomp_frame_export(frame);
+    state->textlen = stomp_frame_length(frame);
+    state->sentlen = 0;
+    return 0;
+}
+
+static void
+stomp_send(struct stomp_state *state)
+{
+    if (state->text == NULL) {
+        uip_send(state->text, 0);
+        return;
+    }
+    if (state->textlen > uip_mss()) {
+        state->sentlen = uip_mss();
+    } else {
+        state->sentlen = state->textlen;
+    }
+    uip_send(state->text, state->sentlen);
+}
+
+void
+stomp_subscribe(struct stomp_state *state)
+{
+    
+}
+
+void
+stomp_unsubscribe(struct stomp_state *state)
+{
+    
+}
+
+void
+stomp_begin(struct stomp_state *state)
+{
+    
+}
+
+void
+stomp_abort(struct stomp_state *state)
+{
+    
+}
+
+void
+stomp_commit(struct stomp_state *state)
+{
+    
+}
+
+void
+stomp_ack(struct stomp_state *state)
+{
+    
+}
+
+void
+stomp_nack(struct stomp_state *state)
+{
+    
 }
