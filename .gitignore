@@ -12,3 +12,6 @@ doc/html
 patches-*
 tools/tunslip6
 .svn
+*.mb951
+tunslip*
+nbproject/
