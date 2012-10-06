@@ -21,8 +21,8 @@ endif
 
 MCU=atmega128rfa1
 
-AVRDUDE_PROGRAMMER=arduino
-AVRDUDE_PORT=/dev/ttyUSB0
+AVRDUDE_PROGRAMMER = arduino
+AVRDUDE_PORT = /dev/ttyUSB0
 AVRDUDE_OPTIONS=-V -F -D -b 57600 -v
 
 SERIAL_DUMP = $(CONTIKI)/tools/sky/serialdump-linux

@@ -42,8 +42,9 @@
 #define __CONTIKI_CONF_H__
 
 /* MCU and clock rate */
-#define PLATFORM       PLATFORM_AVR
+#define PLATFORM PLATFORM_AVR
 #define HARWARE_REVISION ATMEGA128RFA1
+#define PLATFORM_TYPE ATMEGA128RFA1
 #ifndef F_CPU
 #define F_CPU          8000000UL
 #endif
@@ -57,8 +58,8 @@ typedef unsigned short clock_time_t;
 typedef unsigned short uip_stats_t;
 typedef unsigned long off_t;
 
-void clock_delay(unsigned int us2);
-void clock_wait(int ms10);
+void clock_delay(unsigned int delay);
+void clock_wait(clock_time_t t);
 void clock_set_seconds(unsigned long s);
 unsigned long clock_seconds(void);
 
