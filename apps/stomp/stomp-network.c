@@ -4,6 +4,10 @@
 
 #include "stompc.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 struct stomp_state*
 stomp_network_connect(struct stomp_state *state, uip_ipaddr_t *address, uint16_t port)
 {

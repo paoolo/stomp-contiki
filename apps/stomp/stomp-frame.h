@@ -23,22 +23,22 @@ stomp_frame_delete_frame(struct stomp_frame *frame);
 
 /* Tworzy nowy obiekt naglowka, uzywany przez ramke */
 struct stomp_header*
-stomp_frame_new_header(char *name, char *value);
+stomp_frame_new_header(const char *name, const char *value);
 
 struct stomp_header*
-stomp_frame_add_header(char *name, char *value, struct stomp_header *headers);
+stomp_frame_add_header(const char *name, const char *value, struct stomp_header *headers);
 
 /* Tworzy nowy obiekt ramki */
 struct stomp_frame*
-stomp_frame_new_frame(char *command, struct stomp_header *headers, char *payload);
+stomp_frame_new_frame(const char *command, struct stomp_header *headers, const char *payload);
 
 /* Szuka naglowka */		
 struct stomp_header*
-stomp_frame_find_header(char *name, struct stomp_frame *frame);
+stomp_frame_find_header(const char *name, struct stomp_frame *frame);
 
 /* Importuje ramke ze strumienia znakow */
 struct stomp_frame*
-stomp_frame_import(char *stream, struct stomp_frame *frame);
+stomp_frame_import(const char *stream, struct stomp_frame *frame);
 
 /* Eksportuje ramke do strumienia znakow */
 char*

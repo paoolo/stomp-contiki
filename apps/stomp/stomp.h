@@ -2,18 +2,15 @@
 #define STOMP_H_
 
 #include "contiki.h"
+#include "contiki-net.h"
 
-#if UIP_CONF_IPV6 > 0
-void stomp_connect(char *host, uint16_t *addr, uint16_t port, char* login, char* password);
-#else
-void stomp_connect(char *host, uint8_t *addr, uint16_t port, char* login, char* password);
-#endif
+void stomp_connect(char *host, uip_ipaddr_t *addr, uint16_t port, char* login, char* password);
 
-void stomp_send(char *dest, char *value, char *tx);
+void stomp_subscribe(char *id, char *dest, char *ack);
 
-void stomp_subscribe(int id, char *dest, char *ack_mode);
+void stomp_unsubscribe(char *id);
 
-void stomp_unsubscribe(int id);
+void stomp_send(char *dest, char *type, char *len, char *receipt, char *tx, char *msg);
 
 void stomp_begin(char *tx);
 
@@ -21,6 +18,6 @@ void stomp_commit(char *tx);
 
 void stomp_abort(char *tx);
 
-void stomp_disconnect();
+void stomp_disconnect(char *receipt);
 
 #endif /* STOMP_H_ */

@@ -16,3 +16,4 @@ tools/tunslip6
 tunslip*
 nbproject/
 *.native
+*.minimal-net

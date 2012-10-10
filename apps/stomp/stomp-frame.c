@@ -46,7 +46,7 @@ __frame_new_header_empty()
 }
 
 struct stomp_header*
-stomp_frame_new_header(char *name, char *value)
+stomp_frame_new_header(const char *name, const char *value)
 {
     struct stomp_header *header = __frame_new_header_empty();
 
@@ -57,7 +57,7 @@ stomp_frame_new_header(char *name, char *value)
 }
 
 struct stomp_header*
-stomp_frame_add_header(char *name, char *value, struct stomp_header *headers)
+stomp_frame_add_header(const char *name, const char *value, struct stomp_header *headers)
 {
     struct stomp_header *header = stomp_frame_new_header(name, value);
     header->next = headers;
@@ -73,7 +73,7 @@ __frame_new_frame_empty()
 }
 
 struct stomp_frame*
-stomp_frame_new_frame(char *command, struct stomp_header *headers, char *payload)
+stomp_frame_new_frame(const char *command, struct stomp_header *headers, const char *payload)
 {
     struct stomp_frame *frame = __frame_new_frame_empty();
 
@@ -86,7 +86,7 @@ stomp_frame_new_frame(char *command, struct stomp_header *headers, char *payload
 
 /* Parsowanie naglowka ramki, tj. nazwy polecenia */
 static struct stomp_frame*
-__frame_parse_command(char *line, struct stomp_frame *frame)
+__frame_parse_command(const char *line, struct stomp_frame *frame)
 {
     if (line == NULL) {
         /* W przypadku, gdy brak danych, wychodzimy */
@@ -108,7 +108,7 @@ __frame_parse_command(char *line, struct stomp_frame *frame)
 /* Pozwala na wyszukanie danego naglowka, z podaniem nazwy naglowka. W razie
  * nieobecnosci naglowka, zwraca null. */
 struct stomp_header*
-stomp_frame_find_header(char *name, struct stomp_frame *frame)
+stomp_frame_find_header(const char *name, struct stomp_frame *frame)
 {
     /* Wskaznik do poszukiwanego naglowka */
     struct stomp_header *found_frame_header = NULL;
@@ -143,7 +143,7 @@ __frame_append_header(struct stomp_header *header, struct stomp_header *append)
 
 /* Parsowanie pol naglowka ramki */
 static struct stomp_header*
-__frame_parse_header(char *line, struct stomp_header *header)
+__frame_parse_header(const char *line, struct stomp_header *header)
 {
     if (line == NULL) {
         /* W przypadku, gdy brak danych, wychodzimy */
@@ -166,7 +166,7 @@ __frame_parse_header(char *line, struct stomp_header *header)
 
 /* Importuje ramke ze strumienia znakow */
 struct stomp_frame*
-stomp_frame_import(char *stream, struct stomp_frame *frame)
+stomp_frame_import(const char *stream, struct stomp_frame *frame)
 {
     /* Kolejne linie ramki */
     char *line;

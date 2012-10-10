@@ -1,1 +1,1 @@
-stomp_src = stomp.c stomp-crc.c stomp-frame.c stomp-memguard.c stomp-network.c stomp-tools.c
+stomp_src = simple-stomp.c stomp.c stompc.c stomp-crc.c stomp-frame.c stomp-memguard.c stomp-network.c stomp-tools.c stomp-strings.c

@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 char*
-stomp_tools_strcpy(char *str) {
+stomp_tools_strcpy(const char *str) {
     char *ret = NULL;
 
     if (str != NULL) {
@@ -20,7 +20,7 @@ stomp_tools_strcpy(char *str) {
 }
 
 char*
-stomp_tools_strcat(char *dst, char *src) {
+stomp_tools_strcat(char *dst, const char *src) {
     int size = -1;
     char *ret = NULL;
 
@@ -48,7 +48,7 @@ stomp_tools_strcat(char *dst, char *src) {
 }
 
 char*
-stomp_tools_strtok(char **str, char delim) {
+stomp_tools_strtok(const char **str, char delim) {
     char *data = NULL, *tmp = NULL;
     ssize_t i = 0, len = 0;
 

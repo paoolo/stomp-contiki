@@ -1,7 +1,5 @@
+#include "simple-stomp.h"
 #include "stomp-memguard.h"
-#include "stomp-network.h"
-#include "stomp-frame.h"
-#include "stomp.h"
 
 #include "contiki.h"
 #include "contiki-lib.h"
@@ -23,11 +21,11 @@
  *      Author: bibro
  */
 
-PROCESS(program, "STOMP contiki client");
-AUTOSTART_PROCESSES(&program);
+PROCESS(stomp_process, "STOMP contiki client");
+AUTOSTART_PROCESSES(&stomp_process);
 
 /* Glowny program */
-PROCESS_THREAD(program, ev, data) {
+PROCESS_THREAD(stomp_process, ev, data) {
     PROCESS_BEGIN();
 
     getchar();
@@ -41,15 +39,16 @@ PROCESS_THREAD(program, ev, data) {
     char *host = "10.1.1.100";
     uint8_t host_ip[] = { 10, 1, 1, 100 };
 #endif
+    
+    uip_ipaddr_t addr;
+    uip_ipaddr(&addr, host_ip[0], host_ip[1], host_ip[2], host_ip[3]);
 
     uip_init();
     stomp_memguard_init();
-
-    stomp_connect(host, host_ip, port, "admin", "password");
-    stomp_subscribe(0, "/queue/a", "client");
-    stomp_send("/queue/a", "Testowa wiadomosc, wysylana na serwer", NULL);
-    stomp_unsubscribe(0);
-    stomp_disconnect(0);
+    
+    simple_connect(&simple_state, &addr, port, host, "admin", "password");
+    simple_stomp_send(&simple_state, "/queue/a", "text/plain", NULL, NULL, NULL, "Testowa wiadomosc, wysylana na serwer");
+    simple_stomp_disconnect(&simple_state, "0");
 
     PROCESS_END();
 }
