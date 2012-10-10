@@ -1,168 +1,241 @@
-
-#include <malloc.h>
+#include "stompc.h"
 
 #include "contiki.h"
 #include "contiki-net.h"
 
 #include "stomp-network.h"
-#include "stompc.h"
-#include "stomp.h"
+#include "stomp-strings.h"
 
-enum {
-    COMMAND_NONE,
-    COMMAND_CONNECT,
-    COMMAND_SUBSCRIBE,
-    COMMAND_UNSUBSCRIBE,
-    COMMAND_SEND,
-    COMMAND_BEGIN,
-    COMMAND_COMMIT,
-    COMMAND_ABORT,
-    COMMAND_DISCONNECT
-};
+static struct stomp_state state;
 
-static
-PT_THREAD(data_or_command(struct stomp_state *s))
+PROCESS(stomp_process, "Stomp client");
+
+AUTOSTART_PROCESSES(&stomp_process);
+
+PROCESS_THREAD(stomp_process, ev, data)
 {
-    PSOCK_BEGIN(&state->socket);
-    
-    PSOCK_WAIT_UNTIL(&state->socket, PSOCK_NEWDATA(&state->socket) || 
-            (state->command != COMMAND_NONE));
-    
-    PSOCK_END(&state->socket);
-}
+    PROCESS_BEGIN();
 
-#define SEND_STRING(s, str) PSOCK_SEND(s, (uint8_t *)str, (unsigned int)strlen(str))
-
-static
-PT_THREAD(setup_connection(struct stomp_state *state))
-{
-    char *ptr;
-    
-    PSOCK_BEGIN(&state->socket);
-    
-    SEND_STRING(&state->socket, state->outputbuf);
-    
-    PSOCK_END(&state->socket);
-}
-
-static
-PT_THREAD(handle_connection(struct stomp_state *state))
-{
-    PT_BEGIN(&state->pthread);
-    
-    PSOCK_INIT(&state->socket, (uint8_t*)(state->inputbuf), sizeof(state->inputbuf)-1);
-    
-    PT_WAIT_THREAD(&state->pthread, setup_connection(state));
-    
     while(1) {
-        
-        PT_WAIT_UNTIL(&state->pthread, data_or_command(state));
-        
-        if (PSOCK_NEWDATA(&state->socket)) {
-            PT_WAIT_THREAD(&state->pthread, handle_input(state));
+        PROCESS_WAIT_EVENT();
+
+        if(ev == PROCESS_EVENT_EXIT){
+            printf("Exit.\n");
+            process_exit(&stomp_process);
+            LOADER_UNLOAD();
+
+        } else if(ev == tcpip_event) {
+            printf("Networking.\n");
+            stomp_network_app(data);
         }
-        
-        // TODO what do?
     }
-    
-    PT_END(&state->pthread);
-}
 
-static
-PT_THREAD(stomp_send_connect(struct stomp_state *state))
-{
-    PSOCK_BEGIN(&state->socket);
-    
-    SEND_STRING(&state->socket, _FRAME_CMD_CONNECT);
-    
-    PSOCK_END(&state->socket);
-}
+    PROCESS_END();
 
-void
-stomp_init(void)
-{
-    
-}
-
-void
-stomp_appcall(void *s)
-{
-    if (uip_closed() || uip_aborted() || uip_timedout()) {
-        stomp_disconnected(s);
-        
-    } else if (uip_connected()) {
-        struct stomp_state *state = (struct stomp_state*)s;
-        stomp_connected(state);
-        
-        PT_INIT(&(state->pthread));
-        memset(state->command, 0, sizeof(state->command));
-        state->command = COMMAND_NONE;
-        
-        handle_connection(state);
-        
-    } else if (state != NULL) {
-        handle_connection(s);
-    }
 }
 
 struct stomp_state *
-stomp_connect(struct stomp_state *state, char *hostname, uip_ipaddr_t *host, uint16_t port)
+stompc_connect(struct stomp_state *state, uip_ipaddr_t *addr, uint16_t port, char *host, char *login, char *passcode)
 {
-    if (stomp_network_connect(&state->network_state, host, port) == NULL) {
+    if (stomp_network_connect(&state->network_state, addr, port) == NULL) {
         return NULL;
     }
-
-    state->network_state.hostname = hostname;
     return state;
 }
 
-void
-stomp_subscribe(struct stomp_state *state, unsigned char id, char *destination)
+void stomp_network_connected(struct stomp_network_state *state)
 {
-    state->command = COMMAND_SUBSCRIBE;
-    state->id = id;
-    state->destination = destination;
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    printf("Connected.\n");
+
+    if (passcode != NULL && login != NULL) {
+        headers = stomp_frame_new_header(stomp_header_passcode, passcode);
+        headers = stomp_frame_add_header(stomp_header_login, login, headers);
+        headers = stomp_frame_add_header(stomp_header_host, host, headers);
+    } else {
+        headers = stomp_frame_new_header(stomp_header_host, host);
+    }
+    frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buffer, length);
+}
+
+void stomp_network_sent(struct stomp_network_state *state)
+{
+    printf("Frame has been sent.\n");
+}
+
+void stomp_network_received(struct stomp_network_state *state, char *buf, uint16_t len)
+{
+    /* Potrzeba wykonac parsowanie strumienia znakow do ramki,
+     * rozpoznac COMMAND ramki i w zaleznosci od COMMAND wykonac
+     * operacje zgodnie ze specyfikacja protokolu. */
+
+    /* Tutaj moze byc: CONNECTED (gdy CONNECT), MESSAGES, ERROR,
+     * RECEIPT (gdy DISCONNECT). */
+
+    struct stomp_frame *frame = NULL;
+
+    /* TODO */
+    
+    printf("%d\n", len);
+    printf("%s\n", buf);
 }
 
 void
-stomp_unsubscribe(struct stomp_state *state, unsigned char id)
+stompc_subscribe(struct stomp_state *state, char *client_id, char *destination)
 {
-    state->command = COMMAND_UNSUBSCRIBE;
-    state->id = id;
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    headers = stomp_frame_new_header(stomp_header_destination, destination);
+    headers = stomp_frame_add_header(stomp_header_client_id, client_id, headers);
+    frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buf, len);
 }
 
 void
-stomp_send(struct stomp_state *state, char *destination, char *message, char *tx)
+stompc_unsubscribe(struct stomp_state *state, char *client_id)
 {
-    state->command = COMMAND_SEND;
-    state->destination = destination;
-    state->message = message;
-    state->tx = tx;
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    headers = stomp_frame_new_header(stomp_header_client_id, client_id);
+    frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buf, len);
 }
 
 void
-stomp_begin(struct stomp_state *state, char *tx)
+stompc_send(struct stomp_state *state, char *destination, char *tx, char *message)
 {
-    state->command = COMMAND_BEGIN;
-    state->tx = tx;
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    if (tx != NULL) {
+        headers = stomp_frame_new_header(stomp_header_transaction, tx);
+        headers = stomp_frame_add_header(stomp_header_destination, destination, headers);
+    } else {
+        headers = stomp_frame_new_header(stomp_header_destination, destination);
+    }
+    frame = stomp_frame_new_frame(stomp_command_send, headers, message);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buf, len);
 }
 
 void
-stomp_commit(struct stomp_state *state, char *tx)
+stompc_begin(struct stomp_state *state, char *tx)
 {
-    state->command = COMMAND_COMMIT;
-    state->tx = tx;
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    headers = stomp_frame_new_header(stomp_header_transaction, tx);
+    frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buf, len);
 }
 
 void
-stomp_abort(struct stomp_state *state, char *tx)
+stompc_commit(struct stomp_state *state, char *tx)
 {
-    state->command = COMMAND_ABORT;
-    state->tx = tx;
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    headers = stomp_frame_new_header(stomp_header_transaction, tx);
+    frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buf, len);
 }
 
 void
-stomp_disconnect(struct stomp_state *state)
+stompc_abort(struct stomp_state *state, char *tx)
 {
-    state->command = COMMAND_DISCONNECT;
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    headers = stomp_frame_new_header(stomp_header_transaction, tx);
+    frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buf, len);
+}
+
+void
+stompc_disconnect(struct stomp_state *state, char *receipt)
+{
+    char *buf = NULL;
+    uint16_t len = 0;
+
+    struct stomp_header *headers = NULL;
+    struct stomp_frame *frame = NULL;
+
+    headers = stomp_frame_new_header(stomp_header_receipt, receipt);
+    frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
+
+    buf = stomp_frame_export(frame);
+    len = stomp_frame_length(frame);
+
+    stomp_network_send(state, buf, len);
+}
+
+void
+stomp_network_closed(struct stomp_network_state *state)
+{
+    printf("Closed.\n");
+}
+
+void
+stomp_network_aborted(struct stomp_network_state *state)
+{
+    printf("Aborted.\n");
+}
+
+void
+stomp_network_timedout(struct stomp_network_state *state)
+{
+    printf("Timedout.\n");
 }

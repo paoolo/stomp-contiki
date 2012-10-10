@@ -1,12 +1,7 @@
-/*
- * tools.h
- *
- *  Created on: 24-03-2012
- *      Author: paoolo
- */
-
 #ifndef TOOLS_H_
 #define TOOLS_H_
+
+#include <stdlib.h>
 
 /* Create new string and copy */
 char* stomp_tools_strcpy(char *str);
@@ -18,6 +13,6 @@ char* stomp_tools_strcat(char *dst, char *src);
 char* stomp_tools_strtok(char **str, char delim);
 
 /* Copy N characters */
-char* stomp_tools_strncpy(char *dest, const char *src, size_t n);
+char* stomp_tools_strncpy(char *dest, const char *src, ssize_t n);
 
 #endif /* TOOLS_H_ */

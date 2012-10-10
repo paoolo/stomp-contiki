@@ -15,3 +15,4 @@ tools/tunslip6
 *.mb951
 tunslip*
 nbproject/
+*.native

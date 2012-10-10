@@ -6,19 +6,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/*
- * tools.c
- *
- *  Created on: 24-03-2012
- *      Author: paoolo
- */
-
 char*
 stomp_tools_strcpy(char *str) {
     char *ret = NULL;
 
     if (str != NULL) {
-        ret = (char*) _deref(_new_ref(sizeof(char) * (strlen(str) +1)));
+        ret = (char*) stomp_deref(stomp_new_ref(sizeof(char) * (strlen(str) +1)));
 
         strcpy(ret, str);
     }
@@ -33,19 +26,19 @@ stomp_tools_strcat(char *dst, char *src) {
 
     if (dst == NULL && src != NULL) {
         size = sizeof(char) * strlen(src);
-        ret = (char*) _deref(_new_ref(size+1));
+        ret = (char*) stomp_deref(stomp_new_ref(size+1));
 
         strcpy(ret, src);
 
     } else if (dst != NULL && src == NULL) {
         size = sizeof(char) * strlen(dst);
-        ret = (char*) _deref(_new_ref(size+1));
+        ret = (char*) stomp_deref(stomp_new_ref(size+1));
 
         strcpy(ret, dst);
 
     } else if (dst != NULL && src != NULL) {
         size = sizeof(char) * (strlen(dst) + strlen(src));
-        ret = (char*) _deref(_new_ref(size+1));
+        ret = (char*) stomp_deref(stomp_new_ref(size+1));
 
         strcpy(ret, dst);
         strcat(ret, src);
@@ -73,14 +66,14 @@ stomp_tools_strtok(char **str, char delim) {
             && (*(*str + i) == delim
                             || *(*str + i) == '\0')) {
 
-        data = (char*) _deref(_new_ref(sizeof(char) * (i + 1)));
+        data = (char*) stomp_deref(stomp_new_ref(sizeof(char) * (i + 1)));
 
         strncpy(data, *str, i);
 
         if (*(*str + i) != '\0') {
             len = strlen(*str + i + 1);
 
-            tmp = (char*) _deref(_new_ref(sizeof(char) * (len + 1)));
+            tmp = (char*) stomp_deref(stomp_new_ref(sizeof(char) * (len + 1)));
 
             strncpy(tmp, *str + i + 1, len);
 
@@ -95,9 +88,9 @@ stomp_tools_strtok(char **str, char delim) {
 }
 
 char*
-stomp_tools_strncpy(char *dest, const char *src, size_t n)
+stomp_tools_strncpy(char *dest, const char *src, ssize_t n)
 {
-    size_t len;
+    ssize_t len;
 
     len = strlen(src);
     strncpy(dest, src, n);

@@ -1,95 +1,100 @@
-#include "contiki-net.h"
-
 #include "stomp-network.h"
 
-struct stomp_network_state *
-stomp_network_connect(struct stomp_network_state *state, uip_ipaddr_t *address, uint16_t port)
+#include "contiki-net.h"
+
+#include "stompc.h"
+
+struct stomp_state*
+stomp_network_connect(struct stomp_state *state, uip_ipaddr_t *address, uint16_t port)
 {
-    state->conn = tcp_connect(address, UIP_HTONS(port), state);
-    if (state->conn == NULL) {
+    state->network_state.conn = tcp_connect(address, UIP_HTONS(port), state);
+    if (state->network_state.conn == NULL) {
+        printf("Cannot create new TCP connection - Out of memory error.");
         return NULL;
     }
 
-    state->address = address;
-    state->port = port;
+    state->network_state.address = address;
+    state->network_state.port = port;
 
-    state->flags = 0;
-    state->buffer = NULL;
-    state->bufferlen = 0;
-    state->sentlen = 0;
+    state->network_state.flags = 0;
+    state->network_state.buffer = NULL;
+    state->network_state.bufferlen = 0;
+    state->network_state.sentlen = 0;
 
     return state;
 }
 
 unsigned char
-stomp_network_send(struct stomp_network_state *state, char *buffer, uint16_t len)
+stomp_network_send(struct stomp_state *state, char *buffer, uint16_t len)
 {
-    if (state->buffer != NULL) {
+    if (state->network_state.buffer != NULL) {
+        printf("Cannot send data - Buffer is not empty.");
         return 1;
     }
-    state->buffer = buffer;
-    state->bufferlen = len;
-    state->sentlen = 0;
+    state->network_state.buffer = buffer;
+    state->network_state.bufferlen = len;
+    state->network_state.sentlen = 0;
     return 0;
 }
 
 static void
-stomp_network_senddata(struct stomp_network_state *state)
+stomp_network_senddata(struct stomp_state *state)
 {
-    if (state->buffer == NULL) {
-        uip_send(state->buffer, 0);
+    if (state->network_state.buffer == NULL) {
+        uip_send(state->network_state.buffer, 0);
         return;
     }
-    if (state->bufferlen > uip_mss()) {
-        state->sentlen = uip_mss();
+    if (state->network_state.bufferlen > uip_mss()) {
+        state->network_state.sentlen = uip_mss();
     } else {
-        state->sentlen = state->bufferlen;
+        state->network_state.sentlen = state->network_state.bufferlen;
     }
-    uip_send(state->buffer, state->sentlen);
+    uip_send(state->network_state.buffer, state->network_state.sentlen);
 }
 
 unsigned char
-stomp_network_close(struct stomp_network_state *state)
+stomp_network_close(struct stomp_state *state)
 {
-    state->flags = FLAG_CLOSE;
-    if (state->buffer != NULL) {
+    state->network_state.flags = STOMP_FLAG_CLOSE;
+    if (state->network_state.buffer != NULL) {
+        printf("Cannot close - Buffer is not empty.");
         return 1;
     }
     return 0;
 }
 
 unsigned char
-stomp_network_abort(struct stomp_network_state *state)
+stomp_network_abort(struct stomp_state *state)
 {
-    state->flags = FLAG_ABORT;
-    if (state->buffer != NULL) {
+    state->network_state.flags = STOMP_FLAG_ABORT;
+    if (state->network_state.buffer != NULL) {
+        printf("Cannot abort - Buffer is not empty.");
         return 1;
     }
     return 0;
 }
 
 static void
-stomp_network_acked(struct stomp_network_state *state)
+stomp_network_acked(struct stomp_state *state)
 {
-    state->bufferlen -= state->sentlen;
-    if (state->bufferlen == 0) {
-        state->buffer = NULL;
+    state->network_state.bufferlen -= state->network_state.sentlen;
+    if (state->network_state.bufferlen == 0) {
+        state->network_state.buffer = NULL;
         stomp_network_sent(state);
     } else {
-        state->buffer += state->sentlen;
+        state->network_state.buffer += state->network_state.sentlen;
     }
-    state->sentlen = 0;
+    state->network_state.sentlen = 0;
 }
 
 void
 stomp_network_app(void *s)
 {
-    struct stomp_network_state *state = (struct stomp_network_state*)s;
+    struct stomp_state *state = (struct stomp_state*)s;
     
     if (uip_connected()) {
-        state->flags = 0;
+        state->network_state.flags = 0;
         stomp_network_connected(state);
-        stomp_network_senddata(state);
         return;
     }
     
@@ -102,11 +107,11 @@ stomp_network_app(void *s)
     if (uip_timedout()) {
         stomp_network_timedout(state);
     }
-    if (state->flags & FLAG_CLOSE) {
+    if (state->network_state.flags & STOMP_FLAG_CLOSE) {
         uip_close();
         return;
     }
-    if (state->flags & FLAG_ABORT) {
+    if (state->network_state.flags & STOMP_FLAG_ABORT) {
         uip_abort();
         return;
     }
