@@ -1,5 +1,4 @@
 #include "simple-stomp.h"
-#include "stomp-memguard.h"
 
 #include "contiki.h"
 #include "contiki-lib.h"
@@ -21,15 +20,14 @@
  *      Author: bibro
  */
 
-PROCESS(stomp_process, "STOMP contiki client");
-AUTOSTART_PROCESSES(&stomp_process);
+PROCESS(stompc_process, "STOMP contiki client");
+AUTOSTART_PROCESSES(&stompc_process);
 
 /* Glowny program */
-PROCESS_THREAD(stomp_process, ev, data) {
-    PROCESS_BEGIN();
-
-    getchar();
-
+PROCESS_THREAD(stompc_process, ev, data) {
+    
+    unsigned char running = 1;
+    unsigned int step = 0;
     int port = 61613;
 
 #if UIP_CONF_IPV6 > 0
@@ -42,13 +40,36 @@ PROCESS_THREAD(stomp_process, ev, data) {
     
     uip_ipaddr_t addr;
     uip_ipaddr(&addr, host_ip[0], host_ip[1], host_ip[2], host_ip[3]);
+    
+    PROCESS_BEGIN();
+
+    getchar();
 
     uip_init();
-    stomp_memguard_init();
     
     simple_connect(&simple_state, &addr, port, host, "admin", "password");
-    simple_stomp_send(&simple_state, "/queue/a", "text/plain", NULL, NULL, NULL, "Testowa wiadomosc, wysylana na serwer");
-    simple_stomp_disconnect(&simple_state, "0");
+    
+    while (running) {
+        PROCESS_WAIT_EVENT();
+        
+        if (ev == tcpip_event) {
+            simple_app(&simple_state);
+        }
+        
+        switch (step) {
+            case 0:
+                step = step + 1;
+                simple_stomp_send(&simple_state, "/queue/a", "text/plain", NULL, NULL, NULL, "Testowa wiadomosc, wysylana na serwer");
+                break;
+            case 1:
+                step = step + 1;
+                simple_stomp_disconnect(&simple_state, "0");
+                break;
+            default:
+                running = 0;
+                break;
 
+        }
+    }
     PROCESS_END();
 }

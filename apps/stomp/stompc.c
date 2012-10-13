@@ -3,6 +3,7 @@
 #include "contiki.h"
 #include "contiki-net.h"
 
+#include "stomp-tools.h"
 #include "stomp-frame.h"
 #include "stomp-network.h"
 #include "stomp-strings.h"
@@ -11,32 +12,26 @@
 #include <stdio.h>
 #include <string.h>
 
-const char version[4] = {0x31,0x2e,0x31,};
+const char stomp_version_default[4] =
+/* "1.1" */
+{0x31,0x2e,0x31,};
 
-const char default_content_type[11] = {0x74,0x65,0x78,0x74,0x2f,0x70,0x6c,0x61,0x69,0x6e,};
+const char stomp_content_type_default[11] =
+/* "plain/text" */
+{0x74,0x65,0x78,0x74,0x2f,0x70,0x6c,0x61,0x69,0x6e,};
 
 struct stomp_state state;
 
-PROCESS(stomp_process, "Stomp client");
+PROCESS(stompc_process, "StompC");
 
-AUTOSTART_PROCESSES(&stomp_process);
-
-PROCESS_THREAD(stomp_process, ev, data)
+PROCESS_THREAD(stompc_process, ev, data)
 {
     PROCESS_BEGIN();
 
     while(1) {
-        PROCESS_WAIT_EVENT();
-
-        if(ev == PROCESS_EVENT_EXIT){
-            printf("Exit.\n");
-            process_exit(&stomp_process);
-            LOADER_UNLOAD();
-
-        } else if(ev == tcpip_event) {
-            printf("Networking.\n");
-            stomp_network_app(data);
-        }
+        PROCESS_WAIT_UNTIL(ev == tcpip_event);
+        printf("TCP/IP event.\n");
+        stomp_network_app(data);
     }
 
     PROCESS_END();
@@ -49,11 +44,11 @@ stompc_connect(struct stomp_state *state, uip_ipaddr_t *addr, uint16_t port, cha
     if (stomp_network_connect(state, addr, port) == NULL) {
         return NULL;
     }
-    
+
     state->host = host;
     state->login = login;
     state->passcode = passcode;
-    
+
     return state;
 }
 
@@ -67,7 +62,7 @@ void stomp_network_connected(struct stomp_state *state)
 
     printf("Connected.\n");
 
-    headers = stomp_frame_new_header(stomp_header_accept_version, version);
+    headers = stomp_frame_new_header(stomp_header_accept_version, stomp_version_default);
     if (state->passcode != NULL) {
         headers = stomp_frame_add_header(stomp_header_passcode, state->passcode, headers);
     }
@@ -77,12 +72,13 @@ void stomp_network_connected(struct stomp_state *state)
     if (state->host != NULL) {
         headers = stomp_frame_add_header(stomp_header_host, state->host, headers);
     }
-    
+
     frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
 
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 
@@ -100,10 +96,6 @@ void stomp_network_received(struct stomp_state *state, char *buf, uint16_t len)
     /* Tutaj moze byc: CONNECTED (gdy CONNECT), MESSAGES, ERROR,
      * RECEIPT (gdy DISCONNECT). */
 
-    struct stomp_frame *frame = NULL;
-
-    /* TODO */
-    
     printf("Frame has been received: length=%d, content=%s\n", len, buf);
 }
 
@@ -126,20 +118,23 @@ stompc_subscribe(struct stomp_state *state, char *id, char *destination, char *a
         headers = stomp_frame_add_header(stomp_header_destination, destination, headers);
     } else {
         printf("No destination for SUBSCRIBE. Abort.\n");
+        stomp_frame_delete_header(headers);
         return;
     }
     if (id != NULL) {
         headers = stomp_frame_add_header(stomp_header_id, id, headers);
     } else {
         printf("No id for SUBSCRIBE. Abort.\n");
+        stomp_frame_delete_header(headers);
         return;
     }
-    
+
     frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
 
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 
@@ -156,6 +151,7 @@ stompc_unsubscribe(struct stomp_state *state, char *id)
         headers = stomp_frame_new_header(stomp_header_id, id);
     } else {
         printf("No id for UNSUBSCRIBE. Abort.\n");
+        stomp_frame_delete_header(headers);
         return;
     }
 
@@ -164,6 +160,7 @@ stompc_unsubscribe(struct stomp_state *state, char *id)
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 
@@ -186,26 +183,29 @@ stompc_send(struct stomp_state *state, char *destination, char *type, char *leng
         headers = stomp_frame_add_header(stomp_header_content_length, length, headers);
     } else {
         printf("No content-length for SEND. Set to computed value.\n");
-        /* TODO */
+        length = NEW_ARRAY(char, 3); sprintf(length, "%u", (unsigned int)strlen(message));
+        headers = stomp_frame_add_header(stomp_header_content_length, length, headers);
     }
     if (type != NULL) {
         headers = stomp_frame_add_header(stomp_header_content_type, type, headers);
     } else {
         printf("No content-type for SEND. Set to 'text/plain'.\n");
-        headers = stomp_frame_add_header(stomp_header_content_type, default_content_type, headers);
+        headers = stomp_frame_add_header(stomp_header_content_type, stomp_content_type_default, headers);
     }
     if (destination != NULL) {
         headers = stomp_frame_add_header(stomp_header_destination, destination, headers);
     } else {
         printf("No destination for SEND. Abort.\n");
+        stomp_frame_delete_header(headers);
         return;
     }
-    
+
     frame = stomp_frame_new_frame(stomp_command_send, headers, message);
 
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 
@@ -222,6 +222,7 @@ stompc_begin(struct stomp_state *state, char *tx)
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
         printf("No tx for BEGIN. Abort.\n");
+        stomp_frame_delete_header(headers);
         return;
     }
     frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
@@ -229,6 +230,7 @@ stompc_begin(struct stomp_state *state, char *tx)
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 
@@ -245,6 +247,7 @@ stompc_commit(struct stomp_state *state, char *tx)
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
         printf("No tx for COMMIT. Abort.\n");
+        stomp_frame_delete_header(headers);
         return;
     }
     frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
@@ -252,6 +255,7 @@ stompc_commit(struct stomp_state *state, char *tx)
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 
@@ -268,6 +272,7 @@ stompc_abort(struct stomp_state *state, char *tx)
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
         printf("No tx for ABORT. Abort.\n");
+        stomp_frame_delete_header(headers);
         return;
     }
     frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
@@ -275,6 +280,7 @@ stompc_abort(struct stomp_state *state, char *tx)
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 
@@ -286,13 +292,14 @@ stompc_disconnect(struct stomp_state *state, char *receipt)
 
     struct stomp_header *headers = NULL;
     struct stomp_frame *frame = NULL;
-    
+
     headers = stomp_frame_new_header(stomp_header_receipt, receipt);
     frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
 
     buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
 
+    stomp_frame_delete_frame(frame);
     stomp_network_send(state, buf, len);
 }
 

@@ -1,10 +1,4 @@
 /*
- * crc.c
- *
- *  Created on: 26-03-2012
- */
-
-/*
  * 	Author: Tatu Ylonen <ylo@cs.hut.fi>
  * 	Copyright (c) 1992 Tatu Ylonen, Espoo, Finland
  * 		All rights reserved
@@ -18,9 +12,7 @@
  * crc32-function (including changing the interface). //ylo
  */
 
-#include "stomp-crc.h"
-
-static unsigned long __crc_crc32_tab[] = {
+static unsigned long crc_tab[] = {
       0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
       0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
       0xe0d5e91eL, 0x97d2d988L, 0x09b64c2bL, 0x7eb17cbdL, 0xe7b82d07L,
@@ -76,14 +68,13 @@ static unsigned long __crc_crc32_tab[] = {
    };
 
 /* Return a 32-bit CRC of the contents of the buffer. */
-unsigned long _crc_crc32(const unsigned char *__s_string, unsigned int __len_int) {
+unsigned long stomp_crc_crc32(const unsigned char *str, unsigned int len) {
     unsigned int i;
-    unsigned long __crc32val_int;
+    unsigned long val;
 
-    __crc32val_int = 0;
-    for (i = 0;  i < __len_int;  i ++) {
-        __crc32val_int = __crc_crc32_tab[(__crc32val_int ^ __s_string[i]) & 0xff] ^
-        (__crc32val_int >> 8);
+    val = 0;
+    for (i = 0;  i < len;  i ++) {
+        val = crc_tab[(val ^ str[i]) & 0xff] ^ (val >> 8);
     }
-    return __crc32val_int;
+    return val;
 }

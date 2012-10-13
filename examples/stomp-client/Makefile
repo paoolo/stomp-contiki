@@ -6,7 +6,7 @@ CONTIKI_PROJECT = stomp-client
 
 # TARGET = avr-zigduino
 # TARGET = native
-# TARGET = minimal-net
+TARGET = minimal-net
 APPS = stomp 
 
 # WITH_UIP6 = 1

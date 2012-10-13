@@ -20,10 +20,6 @@ const char version[4] = {0x31,0x2e,0x31,};
 
 const char default_content_type[11] = {0x74,0x65,0x78,0x74,0x2f,0x70,0x6c,0x61,0x69,0x6e,};
 
-PROCESS(simple_stomp_process, "Simple STOMP library");
-
-AUTOSTART_PROCESSES(&simple_stomp_process);
-
 struct simple_stomp_state simple_state;
 
 static
@@ -145,8 +141,8 @@ simple_connected(struct simple_stomp_state *s)
         return;
     }
     
-    printf("CONNECT\n");
     s->frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
@@ -173,8 +169,8 @@ simple_stomp_subscribe(struct simple_stomp_state *s, char *id, char *destination
         return;
     }
 
-    printf("SUBSCRIBE\n");
     s->frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
@@ -189,8 +185,8 @@ simple_stomp_unsubscribe(struct simple_stomp_state *s, char *id)
         return;
     }
 
-    printf("UNSUBSCRIBE\n");
     s->frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
@@ -223,8 +219,8 @@ simple_stomp_send(struct simple_stomp_state *s, char *destination, char *type, c
         return;
     }
     
-    printf("SEND\n");
     s->frame = stomp_frame_new_frame(stomp_command_send, headers, message);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
@@ -239,8 +235,8 @@ simple_stomp_begin(struct simple_stomp_state *s, char *tx)
         return;
     }
     
-    printf("BEGIN\n");
     s->frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
@@ -255,8 +251,8 @@ simple_stomp_commit(struct simple_stomp_state *s, char *tx)
         return;
     }
     
-    printf("COMMIT\n");
     s->frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
@@ -271,8 +267,8 @@ simple_stomp_abort(struct simple_stomp_state *s, char *tx)
         return;
     }
     
-    printf("ABORT\n");
     s->frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
@@ -284,26 +280,12 @@ simple_stomp_disconnect(struct simple_stomp_state *s, char *receipt)
         headers = stomp_frame_new_header(stomp_header_receipt, receipt);
     }
     
-    printf("DISCONNECT\n");
     s->frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
+    printf("%s\n", stomp_frame_export(s->frame));
 }
 
 void
 simple_disconnected(struct simple_stomp_state *s)
 {
     printf("Disconnected.\n");
-}
-
-PROCESS_THREAD(simple_stomp_process, ev, data) {
-    PROCESS_BEGIN();
-    
-    while (1) {
-        PROCESS_WAIT_EVENT();
-        
-        if (ev == tcpip_event) {
-            simple_app(data);
-        }
-    }
-    
-    PROCESS_END();
 }

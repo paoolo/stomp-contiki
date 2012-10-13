@@ -1,103 +1,96 @@
 #include "stomp-tools.h"
 
-#include "stomp-memguard.h"
-
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
+
+void*
+stomp_tools_new(int size)
+{
+    void *ptr = malloc(size);
+    memset(ptr, 0, size);
+    return ptr;
+}
 
 char*
-stomp_tools_strcpy(const char *str) {
+stomp_tools_strcpy(const char *src)
+{
+    char *dest = NULL;
+    int len = 0;
+
+    len = strlen(src);
+
+    if (src != NULL) {
+        dest = NEW_ARRAY(char, len+1);
+        strcpy(dest, src);
+    }
+
+    return dest;
+}
+
+char*
+stomp_tools_strncpy(const char *src, int n)
+{
+    char *dest = NULL;
+    int len = 0;
+
+    len = strlen(src);
+
+    if (src != NULL) {
+        if (n > len) {
+            dest = NEW_ARRAY(char, len+1);
+        } else {
+            dest = NEW_ARRAY(char, n+1);
+        }
+        strncpy(dest, src, n);
+    }
+
+    return dest;
+}
+
+char*
+stomp_tools_strcat(char *first, const char *second)
+{
     char *ret = NULL;
 
-    if (str != NULL) {
-        ret = (char*) stomp_deref(stomp_new_ref(sizeof(char) * (strlen(str) +1)));
+    if (first == NULL && second != NULL) {
+        ret = stomp_tools_strcpy(second);
 
-        strcpy(ret, str);
+    } else if (first != NULL && second == NULL) {
+        ret = stomp_tools_strcpy(first);
+
+    } else if (first != NULL && second != NULL) {
+        ret = NEW_ARRAY(char, strlen(first) + strlen(second) + 1);
+
+        strcpy(ret, first);
+        strcat(ret, second);
     }
 
     return ret;
 }
 
-char*
-stomp_tools_strcat(char *dst, const char *src) {
-    int size = -1;
-    char *ret = NULL;
-
-    if (dst == NULL && src != NULL) {
-        size = sizeof(char) * strlen(src);
-        ret = (char*) stomp_deref(stomp_new_ref(size+1));
-
-        strcpy(ret, src);
-
-    } else if (dst != NULL && src == NULL) {
-        size = sizeof(char) * strlen(dst);
-        ret = (char*) stomp_deref(stomp_new_ref(size+1));
-
-        strcpy(ret, dst);
-
-    } else if (dst != NULL && src != NULL) {
-        size = sizeof(char) * (strlen(dst) + strlen(src));
-        ret = (char*) stomp_deref(stomp_new_ref(size+1));
-
-        strcpy(ret, dst);
-        strcat(ret, src);
-    }
-
-    return ret;
+void
+stomp_tools_substr(const char *src, char *dest, int offset, int length)
+{
+    memcpy(dest, src+offset, length);
 }
 
-char*
-stomp_tools_strtok(const char **str, char delim) {
-    char *data = NULL, *tmp = NULL;
-    ssize_t i = 0, len = 0;
+int
+stomp_tools_substr_to(const char *src, char *dest, int offset, char delim)
+{
+    int length = 0;
 
-    while (str != NULL
-            && *str != NULL
-            && *str + i != NULL
-            && *(*str + i) != delim
-            && *(*str + i) != '\0') {
-        i = i + 1;
-    }
+    if (src != NULL && (src+offset) != NULL
+            && (*(src+offset) != 0x00
+                || *(src+offset) != delim)) {
 
-    if (str != NULL
-            && *str != NULL
-            && *str + i != NULL
-            && (*(*str + i) == delim
-                            || *(*str + i) == '\0')) {
-
-        data = (char*) stomp_deref(stomp_new_ref(sizeof(char) * (i + 1)));
-
-        strncpy(data, *str, i);
-
-        if (*(*str + i) != '\0') {
-            len = strlen(*str + i + 1);
-
-            tmp = (char*) stomp_deref(stomp_new_ref(sizeof(char) * (len + 1)));
-
-            strncpy(tmp, *str + i + 1, len);
-
-            /* FIXME It is still a big BUG!! */
-            /* _del_ref(*__str); */
-
-            *str = tmp;
+        while ((src+offset+length) != NULL
+                && (*(src+offset+length) != 0x00
+                    || *(src+offset+length) != delim)) {
+            length = length + 1;
         }
     }
 
-    return data;
-}
+    stomp_tools_substr(src, dest, offset, length);
 
-char*
-stomp_tools_strncpy(char *dest, const char *src, ssize_t n)
-{
-    ssize_t len;
-
-    len = strlen(src);
-    strncpy(dest, src, n);
-
-    if(len > n) {
-        return dest + n;
-    } else {
-        return dest + len;
-    }
+    return offset+length+1;
 }

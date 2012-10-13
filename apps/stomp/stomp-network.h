@@ -20,7 +20,8 @@ struct stomp_network_state
     uint16_t sentlen;
 };
 
-void stomp_network_app(void *s);
+void
+stomp_network_app(void *s);
 
 struct stomp_state* 
 stomp_network_connect(struct stomp_state *s, uip_ipaddr_t *addr, uint16_t port);

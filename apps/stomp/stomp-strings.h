@@ -1,9 +1,9 @@
 #ifndef STOMP_STRINGS_H
 #define	STOMP_STRINGS_H
 
-extern const char stomp_null[2];
-extern const char stomp_new_line[2];
-extern const char stomp_colon[2];
+#define STOMP_NULL 0x00
+#define STOMP_NEW_LINE 0x0a
+#define STOMP_COLON 0x3a
 
 extern const char stomp_command_abort[6];
 extern const char stomp_command_ack[4];

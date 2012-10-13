@@ -1,12 +1,3 @@
-const char stomp_null[2] =
-{0x00,};
-
-const char stomp_new_line[2] =
-{0x0a,};
-
-const char stomp_color[2] =
-{0x3a,};
-
 const char stomp_command_abort[6] =
 /* "ABORT" */
 {0x41,0x42,0x4f,0x52,0x54,};

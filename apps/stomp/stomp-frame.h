@@ -1,16 +1,26 @@
 #ifndef FRAME_H_
 #define FRAME_H_
 
+#define STOMP_NULL 0x00
+#define STOMP_COLON 0x3a
+#define STOMP_NEW_LINE 0x0a
+
+#define STOMP_HEADER_NAME_LEN 21
+#define STOMP_HEADER_VALUE_LEN 64
+
+#define STOMP_FRAME_COMMAND_LEN 12
+#define STOMP_FRAME_PAYLOAD_LEN 128
+
 struct stomp_header {
     struct stomp_header *next;
-    char *name;
-    char *value;
+    char name[STOMP_HEADER_NAME_LEN];
+    char value[STOMP_HEADER_VALUE_LEN];
 };
 
 struct stomp_frame {
-    char *command;
     struct stomp_header *headers;
-    char *payload;
+    char command[STOMP_FRAME_COMMAND_LEN];
+    char payload[STOMP_FRAME_PAYLOAD_LEN];
 };
 
 /* Usuwa naglowek ramki, wraz z zaleznoscmia */

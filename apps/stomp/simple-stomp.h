@@ -19,9 +19,6 @@ struct simple_stomp_state
     struct pt pt;
     struct psock s;
     
-    unsigned char flags;
-    
-    char outputbuf[200];
     char inputbuf[400];
     
     struct uip_conn *conn;
@@ -35,7 +32,8 @@ struct simple_stomp_state
 
 extern struct simple_stomp_state simple_state;
 
-void simple_app(void *s);
+void
+simple_app(void *s);
 
 struct simple_stomp_state *
 simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *ipaddr, uint16_t port, char *host, char *login, char *pass);
