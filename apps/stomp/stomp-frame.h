@@ -51,8 +51,8 @@ struct stomp_frame*
 stomp_frame_import(const char *stream, struct stomp_frame *frame);
 
 /* Eksportuje ramke do strumienia znakow */
-char*
-stomp_frame_export(struct stomp_frame *frame);
+void
+stomp_frame_export(struct stomp_frame *frame, char *stream, int length);
 
 /* Wyswietla zawartosc ramki */
 void

@@ -14,23 +14,26 @@
 #define SIMPLE_STOMP_FLAG_CLOSE 1
 #define SIMPLE_STOMP_FLAG_ABORT 2
 
-struct simple_stomp_state
-{
+#define SIMPLE_STOMP_OUTPUTBUF_SIZE 512
+#define SIMPLE_STOMP_INPUTBUF_SIZE 512
+
+struct simple_stomp_state {
     struct pt pt;
+
     struct psock s;
-    
-    char inputbuf[400];
-    
+
+    unsigned int outputbuf_len;
+    uint8_t outputbuf[SIMPLE_STOMP_OUTPUTBUF_SIZE];
+    uint8_t inputbuf[SIMPLE_STOMP_INPUTBUF_SIZE];
+
     struct uip_conn *conn;
-    
+
     struct stomp_frame *frame;
-    
+
     char *host;
     char *login;
     char *pass;
 };
-
-extern struct simple_stomp_state simple_state;
 
 void
 simple_app(void *s);

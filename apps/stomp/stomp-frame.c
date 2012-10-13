@@ -49,8 +49,12 @@ stomp_frame_new_frame(const char *command, struct stomp_header *headers, const c
 
     frame->headers = headers;
 
-    memcpy(frame->command, command, strlen(command)+1);
-    memcpy(frame->payload, payload, strlen(payload)+1);
+    if (command != NULL) {
+        memcpy(frame->command, command, strlen(command)+1);
+    }
+    if (payload != NULL) {
+        memcpy(frame->payload, payload, strlen(payload)+1);
+    }
 
     return frame;
 }
@@ -88,20 +92,18 @@ stomp_frame_import(const char *stream, struct stomp_frame *frame)
 }
 
 /* Eksportuje ramke do strumienia znakow */
-char*
-stomp_frame_export(struct stomp_frame *frame)
+void
+stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght)
 {
-    char *stream = NULL;
-    int size = 0;
-    int offset = 0, len = 0;
+    int size = 0, offset = 0, len = 0;
     struct stomp_header *header = NULL;
 
     if(frame == NULL) {
-        return stream;
+        return;
     }
 
     size = stomp_frame_length(frame);
-    stream = NEW_ARRAY(char, size);
+    memset(stream, 0, lenght);
 
     /* COMMAND */
     len = strlen(frame->command);
@@ -149,8 +151,6 @@ stomp_frame_export(struct stomp_frame *frame)
     if(offset != size) {
         printf("Stomp frame offset not equals with size: %d != %d\n", offset, size);
     }
-
-    return stream;
 }
 
 int

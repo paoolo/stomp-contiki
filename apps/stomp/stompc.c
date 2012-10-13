@@ -29,7 +29,7 @@ PROCESS_THREAD(stompc_process, ev, data)
     PROCESS_BEGIN();
 
     while(1) {
-        PROCESS_WAIT_UNTIL(ev == tcpip_event);
+        PROCESS_WAIT_EVENT_UNTIL(ev == tcpip_event);
         printf("TCP/IP event.\n");
         stomp_network_app(data);
     }
@@ -75,10 +75,12 @@ void stomp_network_connected(struct stomp_state *state)
 
     frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
@@ -131,10 +133,12 @@ stompc_subscribe(struct stomp_state *state, char *id, char *destination, char *a
 
     frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
@@ -157,10 +161,12 @@ stompc_unsubscribe(struct stomp_state *state, char *id)
 
     frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
@@ -202,10 +208,12 @@ stompc_send(struct stomp_state *state, char *destination, char *type, char *leng
 
     frame = stomp_frame_new_frame(stomp_command_send, headers, message);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
@@ -227,10 +235,12 @@ stompc_begin(struct stomp_state *state, char *tx)
     }
     frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
@@ -252,10 +262,12 @@ stompc_commit(struct stomp_state *state, char *tx)
     }
     frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
@@ -277,10 +289,12 @@ stompc_abort(struct stomp_state *state, char *tx)
     }
     frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
@@ -296,10 +310,12 @@ stompc_disconnect(struct stomp_state *state, char *receipt)
     headers = stomp_frame_new_header(stomp_header_receipt, receipt);
     frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
 
-    buf = stomp_frame_export(frame);
     len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, len);
 
+    stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
+
     stomp_network_send(state, buf, len);
 }
 
