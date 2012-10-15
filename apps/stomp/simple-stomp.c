@@ -20,41 +20,48 @@ const char version[4] = {0x31, 0x2e, 0x31,};
 const char default_content_type[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
 
 static
+PT_THREAD(simple_send(struct simple_stomp_state *s)) {
+    s->outputbuf_len = stomp_frame_length(s->frame);
+    stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
+
+    stomp_frame_delete_frame(s->frame);
+    s->frame = NULL;
+
+    PSOCK_BEGIN(&s->s);
+    printf("%s\n", s->outputbuf);
+    PSOCK_SEND(&s->s, (uint8_t*) s->outputbuf, (unsigned int) s->outputbuf_len);
+    PSOCK_END(&s->s);
+}
+
+static
 PT_THREAD(simple_handle_connection(struct simple_stomp_state *s)) {
+    PT_BEGIN(&s->pt);
     printf("simple_handle_connection: start.\n");
 
-    PT_BEGIN(&s->pt);
-
     PSOCK_INIT(&s->s, (uint8_t*) s->inputbuf, sizeof (s->inputbuf) - 1);
+    PSOCK_WAIT_UNTIL(&s->s, PSOCK_NEWDATA(&s->s) || (s->frame != NULL));
 
-    while (1) {
-        PSOCK_WAIT_UNTIL(&s->s, PSOCK_NEWDATA(&s->s) || (s->frame != NULL));
-
-        if (PSOCK_NEWDATA(&s->s)) {
-            PSOCK_READTO(&s->s, ISO_NULL);
-
-            if (PSOCK_DATALEN(&s->s) > 0) {
-                s->inputbuf[PSOCK_DATALEN(&s->s)] = 0;
-                printf("%s\n", s->inputbuf);
-                /* TODO import frame*/
-            }
-        }
-
-        if (s->frame != NULL) {
-            s->outputbuf_len = stomp_frame_length(s->frame);
-            stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
-            stomp_frame_delete_frame(s->frame);
-            s->frame = NULL;
-
-            printf("Frame: len=%d body=%s\n", s->outputbuf_len, s->outputbuf);
-
-            PSOCK_SEND(&s->s, (uint8_t*) s->outputbuf, (unsigned int) s->outputbuf_len);
+    if (PSOCK_NEWDATA(&s->s)) {
+        PSOCK_READTO(&s->s, ISO_NULL);
+        if (PSOCK_DATALEN(&s->s) > 0) {
+            s->inputbuf[PSOCK_DATALEN(&s->s)] = 0;
+            printf("%s\n", s->inputbuf);
+            /* TODO import frame */
         }
     }
+    if (s->frame != NULL) {
+        s->outputbuf_len = stomp_frame_length(s->frame);
+        stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
 
-    PT_END(&s->pt);
+        stomp_frame_delete_frame(s->frame);
+        s->frame = NULL;
+
+        printf("%s\n", s->outputbuf);
+        PSOCK_SEND(&s->s, (uint8_t*) s->outputbuf, (unsigned int) s->outputbuf_len);
+    }
 
     printf("simple_handle_connection: stop.\n");
+    PT_END(&s->pt);
 }
 
 void
@@ -122,16 +129,7 @@ simple_connected(struct simple_stomp_state *s) {
 
     s->frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
 
-    s->outputbuf_len = stomp_frame_length(s->frame);
-    stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
-    stomp_frame_delete_frame(s->frame);
-    s->frame = NULL;
-
-    printf("Frame: len=%d body=%s\n", s->outputbuf_len, s->outputbuf);
-
-    PSOCK_BEGIN(&s->s);
-    PSOCK_SEND(&s->s, (uint8_t*) s->outputbuf, (unsigned int) s->outputbuf_len);
-    PSOCK_END(&s->s);
+    simple_send(s);
 
     printf("simple_connected: stop.\n");
 }

@@ -66,7 +66,6 @@ PROCESS_THREAD(stompc_process, ev, data) {
                 break;
 
             default:
-                running = 0;
                 break;
         }
 
