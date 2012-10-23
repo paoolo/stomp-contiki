@@ -17,3 +17,4 @@ tunslip*
 nbproject/
 *.native
 *.minimal-net
+*.avr-zigduino

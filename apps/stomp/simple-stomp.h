@@ -17,6 +17,8 @@
 #define SIMPLE_STOMP_OUTPUTBUF_SIZE 512
 #define SIMPLE_STOMP_INPUTBUF_SIZE 512
 
+#define WITH_UDP
+
 struct simple_stomp_state {
     struct pt pt;
 
@@ -26,7 +28,14 @@ struct simple_stomp_state {
     uint8_t outputbuf[SIMPLE_STOMP_OUTPUTBUF_SIZE];
     uint8_t inputbuf[SIMPLE_STOMP_INPUTBUF_SIZE];
 
+    uip_ipaddr_t *ipaddr;
+    uint16_t port;
+    
+#ifdef WITH_UDP
+    struct uip_udp_conn *conn;
+#else
     struct uip_conn *conn;
+#endif
 
     struct stomp_frame *frame;
 

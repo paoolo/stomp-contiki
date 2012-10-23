@@ -19,18 +19,29 @@ const char version[4] = {0x31, 0x2e, 0x31,};
 
 const char default_content_type[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
 
+#ifdef WITH_UDP
+
+void simple_send(struct simple_stomp_state *s) {
+#else
+
 static
 PT_THREAD(simple_send(struct simple_stomp_state *s)) {
+#endif
     s->outputbuf_len = stomp_frame_length(s->frame);
     stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
 
     stomp_frame_delete_frame(s->frame);
     s->frame = NULL;
 
-    PSOCK_BEGIN(&s->s);
     printf("%s\n", s->outputbuf);
+
+#ifdef WITH_UDP
+    uip_udp_packet_sendto(s->conn, s->outputbuf, s->outputbuf_len, s->ipaddr, UIP_HTONS(s->port));
+#else
+    PSOCK_BEGIN(&s->s);
     PSOCK_SEND(&s->s, (uint8_t*) s->outputbuf, (unsigned int) s->outputbuf_len);
     PSOCK_END(&s->s);
+#endif
 }
 
 static
@@ -67,9 +78,23 @@ PT_THREAD(simple_handle_connection(struct simple_stomp_state *s)) {
 void
 simple_app(void *s) {
     struct simple_stomp_state *state = (struct simple_stomp_state*) s;
+#ifdef WITH_UDP
+    char *str;
+#endif
 
     printf("simple_app: start.\n");
 
+#ifdef WITH_UDP
+    if (uip_newdata()) {
+        str = uip_appdata;
+        str[uip_datalen()] = '\0';
+        printf("%s\n", str);
+
+    }
+    if (s != NULL) {
+        simple_send(state);
+    }
+#else
     if (uip_aborted() || uip_timedout() || uip_closed()) {
         simple_disconnected(s);
 
@@ -81,7 +106,7 @@ simple_app(void *s) {
     } else if (s != NULL) {
         simple_handle_connection(s);
     }
-
+#endif
     printf("simple_app: stop.\n");
 }
 
@@ -89,13 +114,23 @@ struct simple_stomp_state *
 simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *ipaddr, uint16_t port, char *host, char *login, char *pass) {
     printf("simple_connect: start.\n");
 
+#ifdef WITH_UDP
+    printf("UDP connect\n");
+    s->conn = udp_new(ipaddr, UIP_HTONS(port), s);
+#else
+    printf("TCP connect\n");
     s->conn = tcp_connect(ipaddr, UIP_HTONS(port), s);
+#endif
+
     printf("Connecting...\n");
 
     if (s->conn == NULL) {
         printf("Not connected.\n");
         return NULL;
     }
+
+    s->ipaddr = ipaddr;
+    s->port = port;
 
     s->host = host;
     s->login = login;
@@ -129,7 +164,9 @@ simple_connected(struct simple_stomp_state *s) {
 
     s->frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
 
+#ifndef WITH_UDP
     simple_send(s);
+#endif
 
     printf("simple_connected: stop.\n");
 }
