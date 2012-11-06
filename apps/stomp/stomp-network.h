@@ -7,8 +7,7 @@
 #define STOMP_FLAG_CLOSE 1
 #define STOMP_FLAG_ABORT 2
 
-struct stomp_network_state
-{
+struct stomp_network_state {
     struct uip_conn *conn;
 
     uip_ipaddr_t *address;
@@ -23,7 +22,7 @@ struct stomp_network_state
 void
 stomp_network_app(void *s);
 
-struct stomp_state* 
+struct stomp_state*
 stomp_network_connect(struct stomp_state *s, uip_ipaddr_t *addr, uint16_t port);
 
 unsigned char

@@ -31,7 +31,7 @@ static int port = 61613;
 static char *host = "apollo";
 
 #if UIP_CONF_IPV6 > 0
-static uint16_t host_ip[] = {65152, 0, 0, 0, 0, 0, 0, 1};
+static uint16_t host_ip[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
 #else
 static uint8_t host_ip[] = {10, 1, 1, 100};
 #endif
@@ -53,17 +53,11 @@ PROCESS_THREAD(stompc_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    uip_init();
-
     // wait 3 second, in order to have the IP addresses well configured
     etimer_set(&et, CLOCK_CONF_SECOND * 3);
 
     // wait until the timer has expired
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
-
-    printf("Press any key...\n");
-
-    getchar();
 
     simple_connect(&simple_state, &addr, port, host, "admin", "password");
 

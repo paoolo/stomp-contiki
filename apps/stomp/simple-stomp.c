@@ -129,6 +129,11 @@ simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *ipaddr, uint16_t port
         return NULL;
     }
 
+#ifdef WITH_UDP
+    udp_bind(s->conn, UIP_HTONS(port + 1));
+    printf("Binding...\n");
+#endif
+
     s->ipaddr = ipaddr;
     s->port = port;
 
@@ -163,10 +168,6 @@ simple_connected(struct simple_stomp_state *s) {
     }
 
     s->frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
-
-#ifndef WITH_UDP
-    simple_send(s);
-#endif
 
     printf("simple_connected: stop.\n");
 }

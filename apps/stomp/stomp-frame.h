@@ -42,7 +42,7 @@ stomp_frame_add_header(const char *name, const char *value, struct stomp_header 
 struct stomp_frame*
 stomp_frame_new_frame(const char *command, struct stomp_header *headers, const char *payload);
 
-/* Szuka naglowka */		
+/* Szuka naglowka */
 struct stomp_header*
 stomp_frame_find_header(const char *name, struct stomp_frame *frame);
 

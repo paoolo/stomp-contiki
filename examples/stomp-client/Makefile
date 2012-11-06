@@ -1,17 +1,13 @@
-ifndef CONTIKI
 CONTIKI = ../..
-endif
-
 CONTIKI_PROJECT = stomp-client
+APPS = stomp
 
-# TARGET = avr-zigduino
 # TARGET = native
-TARGET = minimal-net
-APPS = stomp 
-
-WITH_UIP6 = 1
-UIP_CONF_IPV6 = 1
-AVRDUDE_PORT = /dev/ttyUSB0
+# TARGET = minimal-net
+WITH_UIP6=1
+UIP_CONF_IPV6=1
+TARGET=avr-zigduino
+AVRDUDE_PORT=/dev/ttyUSB0
 
 all: $(CONTIKI_PROJECT)
 
