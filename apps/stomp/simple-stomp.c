@@ -11,13 +11,15 @@
 #include <stdio.h>
 #include <string.h>
 
+const int _C_LONG_SIZE = sizeof (unsigned long);
+
 #define ISO_NULL 0x00
 #define ISO_NL 0x0a
 #define ISO_COLON 0x3a
 
-const char version[4] = {0x31, 0x2e, 0x31,};
+unsigned char version[4] = {0x31, 0x2e, 0x31,};
 
-const char default_content_type[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
+unsigned char default_content_type[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
 
 #ifdef WITH_UDP
 
@@ -27,14 +29,14 @@ void simple_send(struct simple_stomp_state *s) {
 static
 PT_THREAD(simple_send(struct simple_stomp_state *s)) {
 #endif
-    s->outputbuf_len = stomp_frame_length(s->frame);
-    stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
+    s->outputbuf_len = stomp_frame_length(s->frame) /* + JAVA_LONG_SIZE * 2 */;
+    stomp_frame_export(s->frame, (unsigned char*) s->outputbuf, s->outputbuf_len);
 
     stomp_frame_delete_frame(s->frame);
     s->frame = NULL;
 
-    printf("%s\n", s->outputbuf);
-
+    printf("%s\n", s->outputbuf);    
+    
 #ifdef WITH_UDP
     uip_udp_packet_sendto(s->conn, s->outputbuf, s->outputbuf_len, s->ipaddr, UIP_HTONS(s->port));
 #else
@@ -62,7 +64,7 @@ PT_THREAD(simple_handle_connection(struct simple_stomp_state *s)) {
     }
     if (s->frame != NULL) {
         s->outputbuf_len = stomp_frame_length(s->frame);
-        stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
+        stomp_frame_export(s->frame, (unsigned char*) s->outputbuf, s->outputbuf_len);
 
         stomp_frame_delete_frame(s->frame);
         s->frame = NULL;
@@ -111,7 +113,7 @@ simple_app(void *s) {
 }
 
 struct simple_stomp_state *
-simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *ipaddr, uint16_t port, char *host, char *login, char *pass) {
+simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *ipaddr, uint16_t port, unsigned char *host, unsigned char *login, unsigned char *pass) {
     printf("simple_connect: start.\n");
 
 #ifdef WITH_UDP
@@ -173,7 +175,7 @@ simple_connected(struct simple_stomp_state *s) {
 }
 
 void
-simple_stomp_subscribe(struct simple_stomp_state *s, char *id, char *destination, char *ack) {
+simple_stomp_subscribe(struct simple_stomp_state *s, unsigned char *id, unsigned char *destination, unsigned char *ack) {
     struct stomp_header *headers = NULL;
 
     printf("simple_stomp_subscribe: start.\n");
@@ -205,7 +207,7 @@ simple_stomp_subscribe(struct simple_stomp_state *s, char *id, char *destination
 }
 
 void
-simple_stomp_unsubscribe(struct simple_stomp_state *s, char *id) {
+simple_stomp_unsubscribe(struct simple_stomp_state *s, unsigned char *id) {
     struct stomp_header *headers = NULL;
 
     printf("simple_stomp_unsubscribe: start.\n");
@@ -224,7 +226,7 @@ simple_stomp_unsubscribe(struct simple_stomp_state *s, char *id) {
 }
 
 void
-simple_stomp_send(struct simple_stomp_state *s, char *destination, char *type, char *length, char *receipt, char *tx, char *message) {
+simple_stomp_send(struct simple_stomp_state *s, unsigned char *destination, unsigned char *type, unsigned char *length, unsigned char *receipt, unsigned char *tx, unsigned char *message) {
     struct stomp_header *headers = NULL;
 
     printf("simple_stomp_send: start.\n");
@@ -238,10 +240,11 @@ simple_stomp_send(struct simple_stomp_state *s, char *destination, char *type, c
     if (length != NULL) {
         headers = stomp_frame_add_header(stomp_header_content_length, length, headers);
     } else {
+        unsigned char *_length = NEW_ARRAY(unsigned char, 3);
         printf("No content-length for SEND. Set to computed value.\n");
-        length = NEW_ARRAY(char, 3);
-        sprintf(length, "%u", (unsigned int) strlen(message));
-        headers = stomp_frame_add_header(stomp_header_content_length, length, headers);
+
+        sprintf((char*) _length, "%u", (unsigned int) strlen((char*) message));
+        headers = stomp_frame_add_header(stomp_header_content_length, _length, headers);
     }
     if (type != NULL) {
         headers = stomp_frame_add_header(stomp_header_content_type, type, headers);
@@ -263,7 +266,7 @@ simple_stomp_send(struct simple_stomp_state *s, char *destination, char *type, c
 }
 
 void
-simple_stomp_begin(struct simple_stomp_state *s, char *tx) {
+simple_stomp_begin(struct simple_stomp_state *s, unsigned char *tx) {
     struct stomp_header *headers = NULL;
 
     printf("simple_stomp_begin: start.\n");
@@ -282,7 +285,7 @@ simple_stomp_begin(struct simple_stomp_state *s, char *tx) {
 }
 
 void
-simple_stomp_commit(struct simple_stomp_state *s, char *tx) {
+simple_stomp_commit(struct simple_stomp_state *s, unsigned char *tx) {
     struct stomp_header *headers = NULL;
 
     printf("simple_stomp_commit: start.\n");
@@ -301,7 +304,7 @@ simple_stomp_commit(struct simple_stomp_state *s, char *tx) {
 }
 
 void
-simple_stomp_abort(struct simple_stomp_state *s, char *tx) {
+simple_stomp_abort(struct simple_stomp_state *s, unsigned char *tx) {
     struct stomp_header *headers = NULL;
 
     printf("simple_stomp_abort: start.\n");
@@ -320,7 +323,7 @@ simple_stomp_abort(struct simple_stomp_state *s, char *tx) {
 }
 
 void
-simple_stomp_disconnect(struct simple_stomp_state *s, char *receipt) {
+simple_stomp_disconnect(struct simple_stomp_state *s, unsigned char *receipt) {
     struct stomp_header *headers = NULL;
 
     printf("simple_stomp_disconnect: start.\n");

@@ -4,27 +4,27 @@
 #include "contiki-net.h"
 
 void
-stomp_connect(uip_ipaddr_t *addr, uint16_t port, char *host, char* login, char* pass);
+stomp_connect(uip_ipaddr_t *addr, uint16_t port, unsigned char *host, char* login, char* pass);
 
 void
-stomp_subscribe(char *id, char *dest, char *ack);
+stomp_subscribe(unsigned char *id, unsigned char *dest, unsigned char *ack);
 
 void
-stomp_unsubscribe(char *id);
+stomp_unsubscribe(unsigned char *id);
 
 void
-stomp_send(char *dest, char *type, char *len, char *receipt, char *tx, char *msg);
+stomp_send(unsigned char *dest, unsigned char *type, unsigned char *len, unsigned char *receipt, unsigned char *tx, unsigned char *msg);
 
 void
-stomp_begin(char *tx);
+stomp_begin(unsigned char *tx);
 
 void
-stomp_commit(char *tx);
+stomp_commit(unsigned char *tx);
 
 void
-stomp_abort(char *tx);
+stomp_abort(unsigned char *tx);
 
 void
-stomp_disconnect(char *receipt);
+stomp_disconnect(unsigned char *receipt);
 
 #endif /* STOMP_H_ */

@@ -12,11 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 
-const char stomp_version_default[4] =
+const unsigned char stomp_version_default[4] =
 /* "1.1" */
 {0x31,0x2e,0x31,};
 
-const char stomp_content_type_default[11] =
+const unsigned char stomp_content_type_default[11] =
 /* "plain/text" */
 {0x74,0x65,0x78,0x74,0x2f,0x70,0x6c,0x61,0x69,0x6e,};
 
@@ -39,7 +39,7 @@ PROCESS_THREAD(stompc_process, ev, data)
 }
 
 struct stomp_state *
-stompc_connect(struct stomp_state *state, uip_ipaddr_t *addr, uint16_t port, char *host, char *login, char *passcode)
+stompc_connect(struct stomp_state *state, uip_ipaddr_t *addr, uint16_t port, unsigned char *host, unsigned char *login, unsigned char *passcode)
 {
     if (stomp_network_connect(state, addr, port) == NULL) {
         return NULL;
@@ -54,7 +54,7 @@ stompc_connect(struct stomp_state *state, uip_ipaddr_t *addr, uint16_t port, cha
 
 void stomp_network_connected(struct stomp_state *state)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -76,7 +76,7 @@ void stomp_network_connected(struct stomp_state *state)
     frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
@@ -89,7 +89,7 @@ void stomp_network_sent(struct stomp_state *state)
     printf("Frame has been sent.\n");
 }
 
-void stomp_network_received(struct stomp_state *state, char *buf, uint16_t len)
+void stomp_network_received(struct stomp_state *state, unsigned char *buf, uint16_t len)
 {
     /* Potrzeba wykonac parsowanie strumienia znakow do ramki,
      * rozpoznac COMMAND ramki i w zaleznosci od COMMAND wykonac
@@ -102,9 +102,9 @@ void stomp_network_received(struct stomp_state *state, char *buf, uint16_t len)
 }
 
 void
-stompc_subscribe(struct stomp_state *state, char *id, char *destination, char *ack)
+stompc_subscribe(struct stomp_state *state, unsigned char *id, unsigned char *destination, unsigned char *ack)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -134,7 +134,7 @@ stompc_subscribe(struct stomp_state *state, char *id, char *destination, char *a
     frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
@@ -143,9 +143,9 @@ stompc_subscribe(struct stomp_state *state, char *id, char *destination, char *a
 }
 
 void
-stompc_unsubscribe(struct stomp_state *state, char *id)
+stompc_unsubscribe(struct stomp_state *state, unsigned char *id)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -162,7 +162,7 @@ stompc_unsubscribe(struct stomp_state *state, char *id)
     frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
@@ -171,9 +171,9 @@ stompc_unsubscribe(struct stomp_state *state, char *id)
 }
 
 void
-stompc_send(struct stomp_state *state, char *destination, char *type, char *length, char *receipt, char *tx, char *message)
+stompc_send(struct stomp_state *state, unsigned char *destination, unsigned char *type, unsigned char *length, unsigned char *receipt, unsigned char *tx, unsigned char *message)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -209,7 +209,7 @@ stompc_send(struct stomp_state *state, char *destination, char *type, char *leng
     frame = stomp_frame_new_frame(stomp_command_send, headers, message);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
@@ -218,9 +218,9 @@ stompc_send(struct stomp_state *state, char *destination, char *type, char *leng
 }
 
 void
-stompc_begin(struct stomp_state *state, char *tx)
+stompc_begin(struct stomp_state *state, unsigned char *tx)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -236,7 +236,7 @@ stompc_begin(struct stomp_state *state, char *tx)
     frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
@@ -245,9 +245,9 @@ stompc_begin(struct stomp_state *state, char *tx)
 }
 
 void
-stompc_commit(struct stomp_state *state, char *tx)
+stompc_commit(struct stomp_state *state, unsigned char *tx)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -263,7 +263,7 @@ stompc_commit(struct stomp_state *state, char *tx)
     frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
@@ -272,9 +272,9 @@ stompc_commit(struct stomp_state *state, char *tx)
 }
 
 void
-stompc_abort(struct stomp_state *state, char *tx)
+stompc_abort(struct stomp_state *state, unsigned char *tx)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -290,7 +290,7 @@ stompc_abort(struct stomp_state *state, char *tx)
     frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);
@@ -299,9 +299,9 @@ stompc_abort(struct stomp_state *state, char *tx)
 }
 
 void
-stompc_disconnect(struct stomp_state *state, char *receipt)
+stompc_disconnect(struct stomp_state *state, unsigned char *receipt)
 {
-    char *buf = NULL;
+    unsigned unsigned char *buf = NULL;
     uint16_t len = 0;
 
     struct stomp_header *headers = NULL;
@@ -311,7 +311,7 @@ stompc_disconnect(struct stomp_state *state, char *receipt)
     frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, len);
+    buf = NEW_ARRAY(unsigned char, len);
 
     stomp_frame_export(frame, buf, len);
     stomp_frame_delete_frame(frame);

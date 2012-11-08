@@ -28,7 +28,7 @@ stomp_network_connect(struct stomp_state *state, uip_ipaddr_t *address, uint16_t
 }
 
 unsigned char
-stomp_network_send(struct stomp_state *state, char *buffer, uint16_t len) {
+stomp_network_send(struct stomp_state *state, unsigned char *buffer, uint16_t len) {
     if (state->network_state.buffer != NULL) {
         printf("Cannot send data - Buffer is not empty.\n");
         return 1;

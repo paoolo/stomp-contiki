@@ -14,7 +14,7 @@ struct stomp_network_state {
     uint16_t port;
 
     unsigned char flags;
-    char *buffer;
+    unsigned char *buffer;
     uint16_t bufferlen;
     uint16_t sentlen;
 };
@@ -26,7 +26,7 @@ struct stomp_state*
 stomp_network_connect(struct stomp_state *s, uip_ipaddr_t *addr, uint16_t port);
 
 unsigned char
-stomp_network_send(struct stomp_state *s, char *buf, uint16_t len);
+stomp_network_send(struct stomp_state *s, unsigned char *buf, uint16_t len);
 
 unsigned char
 stomp_network_close(struct stomp_state *s);

@@ -11,6 +11,12 @@
 #include "contiki.h"
 #include "contiki-net.h"
 
+extern const int _C_LONG_SIZE;
+
+/* Magic number :) */
+#define C_LONG_SIZE _C_LONG_SIZE
+#define JAVA_LONG_SIZE 8
+
 #define SIMPLE_STOMP_FLAG_CLOSE 1
 #define SIMPLE_STOMP_FLAG_ABORT 2
 
@@ -39,40 +45,40 @@ struct simple_stomp_state {
 
     struct stomp_frame *frame;
 
-    char *host;
-    char *login;
-    char *pass;
+    unsigned char *host;
+    unsigned char *login;
+    unsigned char *pass;
 };
 
 void
 simple_app(void *s);
 
 struct simple_stomp_state *
-simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *ipaddr, uint16_t port, char *host, char *login, char *pass);
+simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *ipaddr, uint16_t port, unsigned char *host, unsigned char *login, unsigned char *pass);
 
 void
 simple_connected(struct simple_stomp_state *s);
 
 void
-simple_stomp_subscribe(struct simple_stomp_state *s, char *id, char *destination, char *ack);
+simple_stomp_subscribe(struct simple_stomp_state *s, unsigned char *id, unsigned char *destination, unsigned char *ack);
 
 void
-simple_stomp_unsubscribe(struct simple_stomp_state *s, char *id);
+simple_stomp_unsubscribe(struct simple_stomp_state *s, unsigned char *id);
 
 void
-simple_stomp_send(struct simple_stomp_state *s, char *destination, char *type, char *length, char *receipt, char *tx, char *message);
+simple_stomp_send(struct simple_stomp_state *s, unsigned char *destination, unsigned char *type, unsigned char *length, unsigned char *receipt, unsigned char *tx, unsigned char *message);
 
 void
-simple_stomp_begin(struct simple_stomp_state *s, char *tx);
+simple_stomp_begin(struct simple_stomp_state *s, unsigned char *tx);
 
 void
-simple_stomp_commit(struct simple_stomp_state *s, char *tx);
+simple_stomp_commit(struct simple_stomp_state *s, unsigned char *tx);
 
 void
-simple_stomp_abort(struct simple_stomp_state *s, char *tx);
+simple_stomp_abort(struct simple_stomp_state *s, unsigned char *tx);
 
 void
-simple_stomp_disconnect(struct simple_stomp_state *s, char *receipt);
+simple_stomp_disconnect(struct simple_stomp_state *s, unsigned char *receipt);
 
 void
 simple_disconnected(struct simple_stomp_state *);

@@ -1,5 +1,7 @@
+#include "simple-stomp.h"
 #include "stomp-frame.h"
 #include "stomp-tools.h"
+#include "stomp-crc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,40 +24,40 @@ stomp_frame_delete_frame(struct stomp_frame *frame) {
 }
 
 struct stomp_header*
-stomp_frame_new_header(const char *name, const char *value) {
+stomp_frame_new_header(const unsigned char *name, const unsigned char *value) {
     struct stomp_header *header = NEW(struct stomp_header);
 
-    memcpy(header->name, name, strlen(name) + 1);
-    memcpy(header->value, value, strlen(value) + 1);
+    memcpy(header->name, name, strlen((char*) name) + 1);
+    memcpy(header->value, value, strlen((char*) value) + 1);
 
     return header;
 }
 
 struct stomp_header*
-stomp_frame_add_header(const char *name, const char *value, struct stomp_header *headers) {
+stomp_frame_add_header(const unsigned char *name, const unsigned char *value, struct stomp_header *headers) {
     struct stomp_header *header = stomp_frame_new_header(name, value);
     header->next = headers;
     return header;
 }
 
 struct stomp_frame*
-stomp_frame_new_frame(const char *command, struct stomp_header *headers, const char *payload) {
+stomp_frame_new_frame(const unsigned char *command, struct stomp_header *headers, const unsigned char *payload) {
     struct stomp_frame *frame = NEW(struct stomp_frame);
 
     frame->headers = headers;
 
     if (command != NULL) {
-        memcpy(frame->command, command, strlen(command) + 1);
+        memcpy(frame->command, command, strlen((char*) command) + 1);
     }
     if (payload != NULL) {
-        memcpy(frame->payload, payload, strlen(payload) + 1);
+        memcpy(frame->payload, payload, strlen((char*) payload) + 1);
     }
 
     return frame;
 }
 
 struct stomp_frame*
-stomp_frame_import(const char *stream, struct stomp_frame *frame) {
+stomp_frame_import(const unsigned char *stream, struct stomp_frame *frame) {
     int offset = 0;
     struct stomp_header *header = NULL;
 
@@ -77,17 +79,17 @@ stomp_frame_import(const char *stream, struct stomp_frame *frame) {
         header->next = frame->headers;
         frame->headers = header;
     }
-
+    
     offset = offset + 1;
 
-    stomp_tools_substr_to(stream, frame->payload, offset, STOMP_NULL);
+    offset = stomp_tools_substr_to(stream, frame->payload, offset, STOMP_NULL);
 
     return frame;
 }
 
 /* Eksportuje ramke do strumienia znakow */
 void
-stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
+stomp_frame_export(struct stomp_frame *frame, unsigned char *stream, int lenght) {
     int size = 0, offset = 0, len = 0;
     struct stomp_header *header = NULL;
 
@@ -99,8 +101,8 @@ stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
     memset(stream, 0, lenght);
 
     /* COMMAND */
-    len = strlen(frame->command);
-    strncpy(stream, frame->command, len);
+    len = strlen((char*) frame->command);
+    strncpy((char*) stream + offset, (const char*) frame->command, len);
     offset = offset + len;
 
     stream[offset] = STOMP_NEW_LINE;
@@ -110,16 +112,16 @@ stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
     header = frame->headers;
     while (header != NULL) {
         /* NAME */
-        len = strlen(header->name);
-        strncpy(stream + offset, header->name, len);
+        len = strlen((char*) header->name);
+        strncpy((char*) stream + offset, (const char*) header->name, len);
         offset = offset + len;
 
         stream[offset] = STOMP_COLON;
         offset = offset + 1;
 
         /* VALUE */
-        len = strlen(header->value);
-        strncpy(stream + offset, header->value, len);
+        len = strlen((char*) header->value);
+        strncpy((char*) stream + offset, (const char*) header->value, len);
         offset = offset + len;
 
         stream[offset] = STOMP_NEW_LINE;
@@ -133,11 +135,12 @@ stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
 
     /* PAYLOAD */
     if (frame->payload != NULL) {
-        len = strlen(frame->payload);
-        strncpy(stream + offset, frame->payload, len);
+        len = strlen((char*) frame->payload);
+        strncpy((char*) stream + offset, (const char*) frame->payload, len);
         offset = offset + len;
     }
 
+    /* END of FRAME */
     stream[offset] = 0x00;
     offset = offset + 1;
 
@@ -156,18 +159,18 @@ stomp_frame_length(struct stomp_frame *frame) {
     }
 
     /* +1 bo na '\n' */
-    sum = sum + strlen(frame->command) + 1;
+    sum = sum + strlen((char*) frame->command) + 1;
 
     header = frame->headers;
     while (header != NULL) {
         /* +2 na ':' i '\n' */
-        sum = sum + strlen(header->name) + strlen(header->value) + 2;
+        sum = sum + strlen((char*) header->name) + strlen((char*) header->value) + 2;
         header = header->next;
     }
 
     if (frame->payload != NULL) {
         /* Zalozenie: payload nie zawiera znaku 0x00. */
-        sum = sum + strlen(frame->payload);
+        sum = sum + strlen((char*) frame->payload);
     }
 
     /* +2 na '\n' po naglowku i '\0' na koniec ramki */

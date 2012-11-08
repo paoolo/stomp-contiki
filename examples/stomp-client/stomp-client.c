@@ -28,10 +28,10 @@ static unsigned int step = 0;
 static uip_ipaddr_t addr;
 static int port = 61613;
 
-static char *host = "apollo";
+static unsigned char *host = (unsigned char*)"apollo";
 
 #if UIP_CONF_IPV6 > 0
-static uint16_t host_ip[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
+static uint16_t host_ip[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
 #else
 static uint8_t host_ip[] = {10, 1, 1, 100};
 #endif
@@ -59,7 +59,11 @@ PROCESS_THREAD(stompc_process, ev, data) {
     // wait until the timer has expired
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
 
-    simple_connect(&simple_state, &addr, port, host, "admin", "password");
+    printf("Press any key...\n");
+    getchar();
+    
+    simple_connect(&simple_state, &addr, port,
+            (unsigned char*)host, (unsigned char*)"admin", (unsigned char*)"password");
 
 #ifdef WITH_UDP
     etimer_set(&et, SEND_INTERVAL);
@@ -80,12 +84,14 @@ PROCESS_THREAD(stompc_process, ev, data) {
 
             case 1:
                 step = step + 1;
-                simple_stomp_send(&simple_state, "/queue/a", "text/plain", NULL, NULL, NULL, "Testowa wiadomosc, wysylana na serwer");
+                simple_stomp_send(&simple_state, 
+                        (unsigned char*)"/queue/a", (unsigned char*)"text/plain", NULL, NULL, NULL, 
+                        (unsigned char*)"Testowa wiadomosc, wysylana na serwer");
                 break;
 
             case 2:
                 step = step + 1;
-                simple_stomp_disconnect(&simple_state, "0");
+                simple_stomp_disconnect(&simple_state, (unsigned char*)"0");
                 break;
 
             default:
