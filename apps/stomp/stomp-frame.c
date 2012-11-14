@@ -1,7 +1,6 @@
 #include "simple-stomp.h"
 #include "stomp-frame.h"
 #include "stomp-tools.h"
-#include "stomp-crc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +23,7 @@ stomp_frame_delete_frame(struct stomp_frame *frame) {
 }
 
 struct stomp_header*
-stomp_frame_new_header(const unsigned char *name, const unsigned char *value) {
+stomp_frame_new_header(const char *name, const char *value) {
     struct stomp_header *header = NEW(struct stomp_header);
 
     memcpy(header->name, name, strlen((char*) name) + 1);
@@ -34,14 +33,15 @@ stomp_frame_new_header(const unsigned char *name, const unsigned char *value) {
 }
 
 struct stomp_header*
-stomp_frame_add_header(const unsigned char *name, const unsigned char *value, struct stomp_header *headers) {
+stomp_frame_add_header(const char *name, const char *value, struct stomp_header *headers) {
     struct stomp_header *header = stomp_frame_new_header(name, value);
     header->next = headers;
     return header;
 }
 
 struct stomp_frame*
-stomp_frame_new_frame(const unsigned char *command, struct stomp_header *headers, const unsigned char *payload) {
+stomp_frame_new_frame(const char *command, struct stomp_header *headers, 
+        const char *payload) {
     struct stomp_frame *frame = NEW(struct stomp_frame);
 
     frame->headers = headers;
@@ -57,7 +57,7 @@ stomp_frame_new_frame(const unsigned char *command, struct stomp_header *headers
 }
 
 struct stomp_frame*
-stomp_frame_import(const unsigned char *stream, struct stomp_frame *frame) {
+stomp_frame_import(const char *stream, struct stomp_frame *frame) {
     int offset = 0;
     struct stomp_header *header = NULL;
 
@@ -87,9 +87,8 @@ stomp_frame_import(const unsigned char *stream, struct stomp_frame *frame) {
     return frame;
 }
 
-/* Eksportuje ramke do strumienia znakow */
 void
-stomp_frame_export(struct stomp_frame *frame, unsigned char *stream, int lenght) {
+stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
     int size = 0, offset = 0, len = 0;
     struct stomp_header *header = NULL;
 
