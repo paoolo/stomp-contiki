@@ -19,136 +19,37 @@ uip_ipaddr_t stomp_network_addr;
 int stomp_network_port = 61613;
 
 #if UIP_CONF_IPV6 > 0
-uint16_t addr_num[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
+uint16_t stomp_network_addr_num[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
 #else
-uint8_t addr_num[] = {10, 1, 1, 100};
+uint8_t stomp_network_addr_num[] = {10, 1, 1, 100};
 #endif
 
 PROCESS(stomp_network_process, "STOMP network process");
 AUTOSTART_PROCESSES(&stomp_network_process);
 
 static void
-__senddata() {
-    printf("__senddata: start.\n");
-
-    if (network_state.buf == NULL) {
-        return;
-    }
-    if (network_state.len > uip_mss()) {
-        network_state.sentlen = uip_mss();
-    } else {
-        network_state.sentlen = network_state.len;
-    }
-
-#ifdef WITH_UDP
-    uip_udp_packet_sendto(network_state.conn, network_state.buf + network_state.off, network_state.len, network_state.addr, UIP_HTONS(network_state.port));
-#else
-    uip_send(network_state.buf + network_state.off, network_state.sentlen);
-#endif
-
-    printf("__senddata: stop.\n");
-}
-
-static void
-__acked() {
-    printf("__acked: start.\n");
-
-    network_state.len -= network_state.sentlen;
-    if (network_state.len == 0) {
-        DELETE(network_state.buf);
-        stomp_network_sent(network_state);
-    } else {
-        network_state.off += network_state.sentlen;
-    }
-    network_state.sentlen = 0;
-
-    printf("__acked: stop.\n");
-}
-
-PROCESS_THREAD(stomp_network_process, ev, data) {
-
-#if UIP_CONF_IPV6 > 0
-    uip_ip6addr(&stomp_network_addr, addr_num[0], addr_num[1], addr_num[2], addr_num[3], addr_num[4], addr_num[5], addr_num[6], addr_num[7]);
-#else
-    uip_ipaddr(&stomp_network_addr, addr_num[0], addr_num[1], addr_num[2], addr_num[3]);
-#endif
-
-    PROCESS_BEGIN();
-    printf("stompc_process: start.\n");
-
-    stomp_network_connect(&stomp_network_addr, stomp_network_port);
-
-    while (1) {
-        PROCESS_WAIT_EVENT();
-        printf("stompc_process: any event.\n");
-        printf("stomp_network_process: start.\n");
-        if (uip_connected()) {
-            printf("stomp_network_process: connected.\n");
-            network_state.flags = 0;
-            stomp_network_connected();
-            __senddata();
-            continue;
-        }
-        if (uip_closed()) {
-            printf("stomp_network_process: closed.\n");
-            stomp_network_closed();
-        }
-        if (uip_aborted()) {
-            printf("stomp_network_process: aborted.\n");
-            stomp_network_aborted();
-        }
-        if (uip_timedout()) {
-            printf("stomp_network_process: timedout.\n");
-            stomp_network_timedout();
-        }
-        if (network_state.flags & STOMP_FLAG_DISCONNECT) {
-            printf("stomp_network_process: closing.\n");
-            uip_close();
-            continue;
-        }
-        if (network_state.flags & STOMP_FLAG_ABORT) {
-            printf("stomp_network_process: aborting.\n");
-            uip_abort();
-            continue;
-        }
-        if (uip_acked()) {
-            printf("stomp_network_process: acked.\n");
-            __acked();
-        }
-        if (uip_newdata()) {
-            printf("stomp_network_process: new data.\n");
-            stomp_network_received((char*) uip_appdata, uip_datalen());
-        }
-        if (uip_rexmit() || uip_newdata() || uip_acked()) {
-            printf("stomp_network_process: rexmit || new data || acked.\n");
-            __senddata();
-
-        } else if (uip_poll()) {
-            printf("stomp_network_process: poll.\n");
-            __senddata();
-        }
-    }
-
-    printf("stomp_network_process: stop.\n");
-    PROCESS_END();
-}
-
-void
-stomp_network_connect(uip_ipaddr_t *addr, uint16_t port) {
+__connect(uip_ipaddr_t *addr, uint16_t port) {
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_connect: start.\n");
-
     printf("stomp_network_connect: connecting...\n");
+#endif
 
 #ifdef WITH_UDP
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_connect: UDP connect\n");
+#endif
     network_state.conn = udp_new(addr, UIP_HTONS(port), &network_state);
 #else
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_connect: TCP connect\n");
+#endif
     network_state.conn = tcp_connect(addr, UIP_HTONS(port), &network_state);
 #endif
 
     if (network_state.conn == NULL) {
+#ifdef STOMP_NETWORK_TRACE
         printf("stomp_network_connect: not connected.\n");
+#endif
         return;
     }
 
@@ -165,16 +66,161 @@ stomp_network_connect(uip_ipaddr_t *addr, uint16_t port) {
     network_state.off = 0;
     network_state.sentlen = 0;
 
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_connect: stop.\n");
+#endif
+}
+
+static void
+__senddata() {
+#ifdef STOMP_NETWORK_TRACE
+    printf("__senddata: start.\n");
+#endif
+
+    if (network_state.buf == NULL) {
+        return;
+    }
+    if (network_state.len > uip_mss()) {
+        network_state.sentlen = uip_mss();
+    } else {
+        network_state.sentlen = network_state.len;
+    }
+
+#ifdef WITH_UDP
+    uip_udp_packet_sendto(network_state.conn, network_state.buf + network_state.off, network_state.len, network_state.addr, UIP_HTONS(network_state.port));
+#else
+    uip_send(network_state.buf + network_state.off, network_state.sentlen);
+#endif
+
+#ifdef STOMP_NETWORK_TRACE
+    printf("__senddata: stop.\n");
+#endif
+}
+
+static void
+__acked() {
+#ifdef STOMP_NETWORK_TRACE
+    printf("__acked: start.\n");
+#endif
+
+    network_state.len -= network_state.sentlen;
+    if (network_state.len == 0) {
+        DELETE(network_state.buf);
+        stomp_network_sent(network_state);
+    } else {
+        network_state.off += network_state.sentlen;
+    }
+    network_state.sentlen = 0;
+
+#ifdef STOMP_NETWORK_TRACE
+    printf("__acked: stop.\n");
+#endif
+}
+
+PROCESS_THREAD(stomp_network_process, ev, data) {
+
+#if UIP_CONF_IPV6 > 0
+    uip_ip6addr(&stomp_network_addr, stomp_network_addr_num[0], stomp_network_addr_num[1], stomp_network_addr_num[2], stomp_network_addr_num[3], stomp_network_addr_num[4], stomp_network_addr_num[5], stomp_network_addr_num[6], stomp_network_addr_num[7]);
+#else
+    uip_ipaddr(&stomp_network_addr, stomp_network_addr_num[0], stomp_network_addr_num[1], stomp_network_addr_num[2], stomp_network_addr_num[3]);
+#endif
+
+    PROCESS_BEGIN();
+#ifdef STOMP_NETWORK_TRACE
+    printf("stomp_network_process: start.\n");
+#endif
+
+    __connect(&stomp_network_addr, stomp_network_port);
+
+    while (1) {
+        PROCESS_WAIT_EVENT();
+#ifdef STOMP_NETWORK_TRACE
+        printf("stomp_network_process: any event.\n");
+#endif
+        if (uip_connected()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: connected.\n");
+#endif
+            network_state.flags = 0;
+            stomp_network_connected();
+            __senddata();
+            continue;
+        }
+        if (uip_closed()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: closed.\n");
+#endif
+            stomp_network_closed();
+        }
+        if (uip_aborted()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: aborted.\n");
+#endif
+            stomp_network_aborted();
+        }
+        if (uip_timedout()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: timedout.\n");
+#endif
+            stomp_network_timedout();
+        }
+        if (network_state.flags & STOMP_FLAG_DISCONNECT) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: closing.\n");
+#endif
+            uip_close();
+            continue;
+        }
+        if (network_state.flags & STOMP_FLAG_ABORT) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: aborting.\n");
+#endif
+            uip_abort();
+            continue;
+        }
+        if (uip_acked()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: acked.\n");
+#endif
+            __acked();
+        }
+        if (uip_newdata()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: new data.\n");
+#endif
+            stomp_network_received((char*) uip_appdata, uip_datalen());
+        }
+        if (uip_rexmit() || uip_newdata() || uip_acked()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: rexmit || new data || acked.\n");
+#endif
+            __senddata();
+
+        } else if (uip_poll()) {
+#ifdef STOMP_NETWORK_TRACE
+            printf("stomp_network_process: poll.\n");
+#endif
+            __senddata();
+        }
+    }
+
+#ifdef STOMP_NETWORK_TRACE
+    printf("stomp_network_process: stop.\n");
+#endif
+    PROCESS_END();
 }
 
 unsigned char
 stomp_network_send(char *buf, uint16_t len) {
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_send: start.\n");
+#endif
 
     if (network_state.buf != NULL) {
+#ifdef STOMP_NETWORK_TRACE
         printf("stomp_network_send: there is something still sending.\n");
         printf("stomp_network_send: stop.\n");
+#endif
         return 1;
     }
 
@@ -182,38 +228,50 @@ stomp_network_send(char *buf, uint16_t len) {
     network_state.len = len;
     network_state.sentlen = 0;
 
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_send: stop.\n");
+#endif
     return 0;
 }
 
 unsigned char
 stomp_network_close() {
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_close: start.\n");
+#endif
 
     network_state.flags = STOMP_FLAG_DISCONNECT;
     if (network_state.buf != NULL) {
+#ifdef STOMP_NETWORK_TRACE
         printf("stomp_network_close: there was something to send.\n");
-
         printf("stomp_network_close: stop.\n");
+#endif
         return 1;
     }
 
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_close: stop.\n");
+#endif
     return 0;
 }
 
 unsigned char
 stomp_network_abort() {
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_abort: start.\n");
+#endif
 
     network_state.flags = STOMP_FLAG_ABORT;
     if (network_state.buf != NULL) {
+#ifdef STOMP_NETWORK_TRACE
         printf("stomp_network_abort: there was something to send.\n");
-
         printf("stomp_network_abort: stop.\n");
+#endif
         return 1;
     }
-
+    
+#ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_abort: stop.\n");
+#endif
     return 0;
 }

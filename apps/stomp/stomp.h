@@ -6,6 +6,9 @@
 #include <stdint.h>
 
 // #define WITH_UDP
+#define STOMP_TRACE
+#define STOMPC_TRACE
+// #define STOMP_NETWORK_TRACE
 
 extern const char stomp_version_default[4];
 extern const char stomp_content_type_default[11];

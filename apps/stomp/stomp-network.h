@@ -32,15 +32,12 @@ extern uip_ipaddr_t stomp_network_addr;
 extern int stomp_network_port;
 
 #if UIP_CONF_IPV6 > 0
-extern uint16_t addr_num[];
+extern uint16_t stomp_network_addr_num[];
 #else
-extern uint8_t addr_num[];
+extern uint8_t stomp_network_addr_num[];
 #endif
 
 PROCESS_NAME(stomp_network_process);
-
-void
-stomp_network_connect(uip_ipaddr_t *addr, uint16_t port);
 
 unsigned char
 stomp_network_send(char *buf, uint16_t len);
