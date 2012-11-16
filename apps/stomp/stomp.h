@@ -35,9 +35,15 @@ void
 stomp_disconnect(char *receipt);
 
 void
+stomp_connected();
+
+void
 stomp_sent();
 
 void
 stomp_received(struct stomp_frame *frame);
+
+void
+stomp_closed();
 
 #endif /* STOMP_H_ */

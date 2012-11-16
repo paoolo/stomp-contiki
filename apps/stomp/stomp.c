@@ -219,6 +219,18 @@ stomp_disconnect(char *receipt) {
     printf("stomp_disconnect: stop.\n");
 }
 
+/* Callbacks */
+
+void
+stompc_connected() {
+    printf("stompc_connected: start.\n");
+
+    printf("CONNECTED:\n");
+    stomp_connected();
+
+    printf("stompc_connected: stop.\n");
+}
+
 void
 stompc_sent() {
     printf("stompc_sent: start.\n");
@@ -234,8 +246,18 @@ stompc_received(char *buf, uint16_t len) {
     printf("stompc_received: starte.\n");
 
     printf("RECEIVED: len=%d, buf=%s\n", len, buf);
-    
+
     stomp_received(NULL);
 
     printf("stompc_received: stop.\n");
+}
+
+void
+stompc_closed() {
+    printf("stompc_closed: start.\n");
+
+    printf("CLOSED:\n");
+    stomp_closed();
+
+    printf("stompc_closed: stop.\n");
 }

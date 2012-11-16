@@ -77,7 +77,7 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
     printf("stompc_process: start.\n");
 
     stomp_network_connect(&stomp_network_addr, stomp_network_port);
-    
+
     while (1) {
         PROCESS_WAIT_EVENT();
         printf("stompc_process: any event.\n");
@@ -122,6 +122,7 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
         if (uip_rexmit() || uip_newdata() || uip_acked()) {
             printf("stomp_network_process: rexmit || new data || acked.\n");
             __senddata();
+
         } else if (uip_poll()) {
             printf("stomp_network_process: poll.\n");
             __senddata();
@@ -186,7 +187,7 @@ stomp_network_send(char *buf, uint16_t len) {
 }
 
 unsigned char
-stomp_network_disconnect() {
+stomp_network_close() {
     printf("stomp_network_close: start.\n");
 
     network_state.flags = STOMP_FLAG_DISCONNECT;

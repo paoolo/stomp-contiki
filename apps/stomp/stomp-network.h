@@ -46,7 +46,7 @@ unsigned char
 stomp_network_send(char *buf, uint16_t len);
 
 unsigned char
-stomp_network_disconnect();
+stomp_network_close();
 
 unsigned char
 stomp_network_abort();

@@ -50,6 +50,7 @@ stomp_network_connected() {
     printf("stomp_network_connected: start.\n");
 
     printf("stomp_network_connected: connected.\n");
+    stompc_connected();
 
     printf("stomp_network_connected: stop.\n");
 }
@@ -79,6 +80,7 @@ stomp_network_closed() {
     printf("stomp_network_closed: start.\n");
 
     printf("stomp_network_closed: closed.\n");
+    stompc_closed();
 
     printf("stomp_network_closed: stop.\n");
 }

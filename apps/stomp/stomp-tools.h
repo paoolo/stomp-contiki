@@ -31,6 +31,6 @@ stomp_tools_substr_to(const char *src, char *dest, int offset, char delim);
 #define NEW(T) (T*)stomp_tools_new(sizeof(T))
 #define NEW_ARRAY(T, LEN) (T*)stomp_tools_new(sizeof(T) * (LEN))
 
-#define DELETE(PTR) free(PTR)
+#define DELETE(PTR) free(PTR); PTR = NULL
 
 #endif /* TOOLS_H_ */

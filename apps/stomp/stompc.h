@@ -17,12 +17,20 @@ extern struct stompc_state c_state;
 
 PROCESS_NAME(stompc_process);
 
-/* TODO notifiing about sent data */
+/* TODO notifing about connected */
+void
+stompc_connected();
+
+/* TODO notifing about sent data */
 void
 stompc_sent();
 
-/* TODO notifiing about received data */
+/* TODO notifing about received data */
 void
 stompc_received(char *buf, uint16_t len);
+
+/* TODO notifing about closed */
+void
+stompc_closed();
 
 #endif	/* STOMPC_H */

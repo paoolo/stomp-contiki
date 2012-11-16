@@ -19,19 +19,25 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
     printf("Press any key...\n");
     getchar();
 
-    stomp_connect("apollo", "admin", "password");
-    PROCESS_WAIT_EVENT();
-    
-    stomp_send("/queue/a", "text/plain", NULL, NULL, NULL, "Testowa wiadomosc, wysylana na serwer");
-    PROCESS_WAIT_EVENT();
-    
-    stomp_disconnect("0");
-    PROCESS_WAIT_EVENT();
+    printf("Waiting for server...\n");
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
-    printf("Press any key...\n");
-    getchar();
+    stomp_connect("apollo", "admin", "password");
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
+
+    stomp_send("/queue/a", "text/plain", NULL, NULL, NULL, "Testowa wiadomosc, wysylana na serwer");
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
+
+    stomp_disconnect("0");
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
     PROCESS_END();
+}
+
+void
+stomp_connected() {
+    printf("Hooray! We have been connected to server!\n");
+    process_post(&stomp_client_process, PROCESS_EVENT_CONTINUE, NULL);
 }
 
 void
@@ -43,5 +49,11 @@ stomp_sent() {
 void
 stomp_received(struct stomp_frame *frame) {
     printf("Yeah! We have got it!\n");
+    process_post(&stomp_client_process, PROCESS_EVENT_CONTINUE, NULL);
+}
+
+void
+stomp_closed() {
+    printf("Oh nooo! The connection has been closed!\n");
     process_post(&stomp_client_process, PROCESS_EVENT_CONTINUE, NULL);
 }
