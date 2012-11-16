@@ -137,7 +137,7 @@ struct namemap {
 #define STATE_ASKING 2
 #define STATE_DONE   3
 #define STATE_ERROR  4
-  uint8_t state;
+  uint8_t c_state;
   uint8_t tmr;
   uint8_t retries;
   uint8_t seqno;

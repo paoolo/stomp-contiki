@@ -426,9 +426,9 @@ uint32_t uip_ds6_compute_reachable_time(void); /** \brief compute random reachab
 
 /** \name Macros to check if an IP address (unicast, multicast or anycast) is mine */
 /** @{ */
-#define uip_ds6_is_my_addr(addr)  (uip_ds6_addr_lookup(addr) != NULL)
-#define uip_ds6_is_my_maddr(addr) (uip_ds6_maddr_lookup(addr) != NULL)
-#define uip_ds6_is_my_aaddr(addr) (uip_ds6_aaddr_lookup(addr) != NULL)
+#define uip_ds6_is_my_addr(stomp_network_addr)  (uip_ds6_addr_lookup(stomp_network_addr) != NULL)
+#define uip_ds6_is_my_maddr(stomp_network_addr) (uip_ds6_maddr_lookup(stomp_network_addr) != NULL)
+#define uip_ds6_is_my_aaddr(stomp_network_addr) (uip_ds6_aaddr_lookup(stomp_network_addr) != NULL)
 /** @} */
 /** @} */
 

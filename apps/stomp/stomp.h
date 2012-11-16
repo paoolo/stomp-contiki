@@ -1,15 +1,17 @@
 #ifndef STOMP_H_
 #define STOMP_H_
 
-#include "contiki-net.h"
+#include "stomp-frame.h"
 
-#define WITH_UDP
+#include <stdint.h>
+
+// #define WITH_UDP
+
+extern const char stomp_version_default[4];
+extern const char stomp_content_type_default[11];
 
 void
-stomp_app();
-
-void
-stomp_connect(uip_ipaddr_t *addr, uint16_t port, char *host, char* login, char* pass);
+stomp_connect(char *host, char* login, char* pass);
 
 void
 stomp_subscribe(char *id, char *destination, char *ack);
@@ -32,12 +34,10 @@ stomp_abort(char *tx);
 void
 stomp_disconnect(char *receipt);
 
-/* Callbacks */
-
 void
 stomp_sent();
 
 void
-stomp_received(char *buf, uint16_t len);
+stomp_received(struct stomp_frame *frame);
 
 #endif /* STOMP_H_ */

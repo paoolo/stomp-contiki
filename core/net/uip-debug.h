@@ -77,11 +77,11 @@ void uip_debug_lladdr_print(const uip_lladdr_t *addr);
 #else
 #define PRINTF(...) printf(__VA_ARGS__)
 #endif
-#define PRINT6ADDR(addr) uip_debug_ipaddr_print(addr)
+#define PRINT6ADDR(stomp_network_addr) uip_debug_ipaddr_print(stomp_network_addr)
 #define PRINTLLADDR(lladdr) uip_debug_lladdr_print(lladdr)
 #else
 #define PRINTF(...)
-#define PRINT6ADDR(addr)
+#define PRINT6ADDR(stomp_network_addr)
 #define PRINTLLADDR(lladdr)
 #endif /* (DEBUG) & DEBUG_PRINT */
 

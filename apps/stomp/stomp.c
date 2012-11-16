@@ -1,44 +1,42 @@
+#include "stomp.h"
+
 #include "stompc.h"
 #include "stomp-tools.h"
+#include "stomp-frame.h"
+#include "stomp-strings.h"
 
-#include "contiki-net.h"
-#include "process.h"
-
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+const char stomp_version_default[4] = {0x31, 0x2e, 0x31,};
+
+const char stomp_content_type_default[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
 
 void
-stomp_app() {
-    printf("APP:\n");
-    stompc_app(&state);
-}
-
-void
-stomp_connect(uip_ipaddr_t *addr, uint16_t port, char* host, char* login, char* passcode) {
+stomp_connect(char* host, char* login, char* passcode) {
     struct stomp_header *headers = NULL;
 
     printf("stomp_connect: start.\n");
     printf("CONNECT: host=%s, login=%s, pass=%s\n", host, login, passcode);
 
-    state->network_state.addr = addr;
-    state->network_state.port = port;
-
     headers = stomp_frame_new_header(stomp_header_accept_version, stomp_version_default);
-    if (state->pass != NULL) {
-        headers = stomp_frame_add_header(stomp_header_passcode, state->pass, headers);
+    if (passcode != NULL) {
+        headers = stomp_frame_add_header(stomp_header_passcode, passcode, headers);
     }
-    if (state->login != NULL) {
-        headers = stomp_frame_add_header(stomp_header_login, state->login, headers);
+    if (login != NULL) {
+        headers = stomp_frame_add_header(stomp_header_login, login, headers);
     }
-    if (state->host != NULL) {
-        headers = stomp_frame_add_header(stomp_header_host, state->host, headers);
+    if (host != NULL) {
+        headers = stomp_frame_add_header(stomp_header_host, host, headers);
     } else {
         printf("stomp_connect: no host for CONNECT. Abort.\n");
         stomp_frame_delete_header(headers);
         return;
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
+    c_state.frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_connect: start.\n");
@@ -72,7 +70,7 @@ stomp_subscribe(char *id, char *destination, char *ack) {
         return;
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
+    c_state.frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_subscribe: stop.\n");
@@ -93,7 +91,7 @@ stomp_unsubscribe(char *id) {
         return;
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
+    c_state.frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_unsubscribe: start.\n");
@@ -135,7 +133,7 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
         return;
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_send, headers, message);
+    c_state.frame = stomp_frame_new_frame(stomp_command_send, headers, message);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_send: stop.\n");
@@ -156,7 +154,7 @@ stomp_begin(char *tx) {
         return;
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
+    c_state.frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_begin: stop.\n");
@@ -177,7 +175,7 @@ stomp_commit(char *tx) {
         return;
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
+    c_state.frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_commit: stop.\n");
@@ -198,7 +196,7 @@ stomp_abort(char *tx) {
         return;
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
+    c_state.frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_abort: stop.\n");
@@ -215,7 +213,7 @@ stomp_disconnect(char *receipt) {
         headers = stomp_frame_new_header(stomp_header_receipt, receipt);
     }
 
-    state->frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
+    c_state.frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
     process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
 
     printf("stomp_disconnect: stop.\n");
@@ -223,12 +221,21 @@ stomp_disconnect(char *receipt) {
 
 void
 stompc_sent() {
+    printf("stompc_sent: start.\n");
+
     printf("SENT:\n");
     stomp_sent();
+
+    printf("stompc_send: stop.\n");
 }
 
 void
 stompc_received(char *buf, uint16_t len) {
+    printf("stompc_received: starte.\n");
+
     printf("RECEIVED: len=%d, buf=%s\n", len, buf);
-    stomp_received(buf, len);
+    
+    stomp_received(NULL);
+
+    printf("stompc_received: stop.\n");
 }
