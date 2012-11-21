@@ -39,10 +39,10 @@ stomp_connect(char* host, char* login, char* passcode) {
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
-    printf("stomp_connect: start.\n");
+    printf("stomp_connect: stop.\n");
 #endif
 }
 
@@ -77,7 +77,7 @@ stomp_subscribe(char *id, char *destination, char *ack) {
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
     printf("stomp_subscribe: stop.\n");
@@ -102,7 +102,7 @@ stomp_unsubscribe(char *id) {
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
     printf("stomp_unsubscribe: start.\n");
@@ -148,7 +148,7 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_send, headers, message);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
     printf("stomp_send: stop.\n");
@@ -173,7 +173,7 @@ stomp_begin(char *tx) {
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
     printf("stomp_begin: stop.\n");
@@ -198,7 +198,7 @@ stomp_commit(char *tx) {
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
     printf("stomp_commit: stop.\n");
@@ -223,7 +223,7 @@ stomp_abort(char *tx) {
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
     printf("stomp_abort: stop.\n");
@@ -244,7 +244,7 @@ stomp_disconnect(char *receipt) {
     }
 
     c_state.frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
-    process_post(&stompc_process, PROCESS_EVENT_CONTINUE, NULL);
+    stompc_frame();
 
 #ifdef STOMP_TRACE
     printf("stomp_disconnect: stop.\n");

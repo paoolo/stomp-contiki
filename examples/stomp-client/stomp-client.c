@@ -11,7 +11,7 @@
 #include <string.h>
 
 PROCESS(stomp_client_process, "STOMP contiki client");
-AUTOSTART_PROCESSES(&stomp_client_process, &stompc_process, &stomp_network_process);
+AUTOSTART_PROCESSES(&stomp_client_process, &stomp_network_process, &stomp_network_send_process);
 
 PROCESS_THREAD(stomp_client_process, ev, data) {
     PROCESS_BEGIN();
@@ -20,16 +20,12 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
     getchar();
 
     printf("Waiting for server...\n");
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
     stomp_connect("apollo", "admin", "password");
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
     stomp_send("/queue/a", "text/plain", NULL, NULL, NULL, "Testowa wiadomosc, wysylana na serwer");
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
     stomp_disconnect("0");
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
     PROCESS_END();
 }

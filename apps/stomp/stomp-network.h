@@ -28,6 +28,8 @@ struct stomp_network_state {
 
 extern struct stomp_network_state network_state;
 
+extern struct stomp_queue network_send_queue;
+
 extern uip_ipaddr_t stomp_network_addr;
 extern int stomp_network_port;
 
@@ -38,6 +40,7 @@ extern uint8_t stomp_network_addr_num[];
 #endif
 
 PROCESS_NAME(stomp_network_process);
+PROCESS_NAME(stomp_network_send_process);
 
 unsigned char
 stomp_network_send(char *buf, uint16_t len);

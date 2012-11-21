@@ -17,6 +17,9 @@ extern struct stompc_state c_state;
 
 PROCESS_NAME(stompc_process);
 
+void
+stompc_frame();
+
 /* TODO notifing about connected */
 void
 stompc_connected();

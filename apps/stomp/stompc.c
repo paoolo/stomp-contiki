@@ -19,9 +19,6 @@ PROCESS(stompc_process, "STOMPc process");
 AUTOSTART_PROCESSES(&stompc_process);
 
 PROCESS_THREAD(stompc_process, ev, data) {
-    uint16_t len;
-    char *buf;
-
     PROCESS_BEGIN();
 #ifdef STOMPC_TRACE
     printf("stompc_process: start.\n");
@@ -32,22 +29,29 @@ PROCESS_THREAD(stompc_process, ev, data) {
 #ifdef STOMPC_TRACE
         printf("stompc_process: any event.\n");
 #endif
-        if (c_state.frame != NULL) {
-            len = stomp_frame_length(c_state.frame);
-            buf = NEW_ARRAY(char, len);
-            stomp_frame_export(c_state.frame, buf, len);
-
-            stomp_frame_delete_frame(c_state.frame);
-            c_state.frame = NULL;
-
-            stomp_network_send(buf, len);
-            process_post(&stomp_network_process, PROCESS_EVENT_CONTINUE, NULL);
-        }
+        stompc_frame();
     }
 #ifdef STOMPC_TRACE
     printf("stompc_process: stop.\n");
 #endif
     PROCESS_END();
+}
+
+void
+stompc_frame() {
+    uint16_t len;
+    char *buf;
+
+    if (c_state.frame != NULL) {
+        len = stomp_frame_length(c_state.frame);
+        buf = NEW_ARRAY(char, len);
+        stomp_frame_export(c_state.frame, buf, len);
+
+        stomp_frame_delete_frame(c_state.frame);
+        c_state.frame = NULL;
+
+        stomp_network_send(buf, len);
+    }
 }
 
 /* Callbacks */
