@@ -139,7 +139,7 @@ PROCESS_THREAD(stomp_network_send_process, ev, data) {
 #endif
     etimer_set(&et, CLOCK_CONF_SECOND * 30);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
-    
+
     etimer_set(&et, CLOCK_CONF_SECOND * 15);
     while (1) {
         PROCESS_WAIT_EVENT();
@@ -191,9 +191,9 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
 #ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_process: start.\n");
 #endif
-    
+
     __connect(&stomp_network_addr, stomp_network_port);
-    
+
     while (1) {
 #ifdef STOMP_NETWORK_TRACE
         printf("stomp_network_process: wait for any event.\n");

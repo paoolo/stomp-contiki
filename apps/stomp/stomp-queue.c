@@ -18,7 +18,7 @@ void stomp_queue_add(char *buf, uint16_t len, struct stomp_queue *queue) {
     struct stomp_queue_node *node;
 
 #ifdef STOMP_QUEUE_TRACE
-    printf("stomp_queue_add: start (%p).\n", queue);
+    printf("stomp_queue_add: start.\n");
 #endif
 
     if (queue != NULL && buf != NULL) {
@@ -50,7 +50,7 @@ void stomp_queue_add(char *buf, uint16_t len, struct stomp_queue *queue) {
 
 char* stomp_queue_get_buf(struct stomp_queue *queue) {
 #ifdef STOMP_QUEUE_TRACE
-    printf("stomp_queue_get_buf: start (%p).\n", queue);
+    printf("stomp_queue_get_buf: start.\n");
 #endif
     if (queue != NULL && queue->head != NULL) {
 #ifdef STOMP_QUEUE_TRACE
@@ -66,7 +66,7 @@ char* stomp_queue_get_buf(struct stomp_queue *queue) {
 
 uint16_t stomp_queue_get_len(struct stomp_queue *queue) {
 #ifdef STOMP_QUEUE_TRACE
-    printf("stomp_queue_get_len: start (%p).\n", queue);
+    printf("stomp_queue_get_len: start.\n");
 #endif
     if (queue != NULL && queue->head != NULL) {
 #ifdef STOMP_QUEUE_TRACE

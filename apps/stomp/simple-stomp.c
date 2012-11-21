@@ -21,25 +21,32 @@ char default_content_type[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61,
 
 void
 _simple_udp_send(struct simple_stomp_state *s) {
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_udp_send: start.\n");
-
+#endif
     uip_udp_packet_sendto(s->conn, s->outputbuf, s->outputbuf_len, s->addr, UIP_HTONS(s->port));
-
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_udp_send: stop.\n");
+#endif
 }
 
 static
 PT_THREAD(_simple_tcp_send(struct simple_stomp_state *s)) {
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_tcp_send: start.\n");
-
+#endif
     PSOCK_BEGIN(&s->s);
     PSOCK_SEND(&s->s, (uint8_t*) s->outputbuf, (unsigned int) s->outputbuf_len);
     PSOCK_END(&s->s);
-
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_tcp_send: stop.\n");
+#endif
 }
 
 void simple_send(struct simple_stomp_state *s) {
+#ifdef SIMPLE_STOMP_TRACE
+    printf("simple_send: start.\n");
+#endif
     s->outputbuf_len = stomp_frame_length(s->frame);
     stomp_frame_export(s->frame, (char*) s->outputbuf, s->outputbuf_len);
 
@@ -53,12 +60,17 @@ void simple_send(struct simple_stomp_state *s) {
 #else
     _simple_tcp_send(s);
 #endif
+#ifdef SIMPLE_STOMP_TRACE
+    printf("simple_send: stop.\n");
+#endif
 }
 
 static
 PT_THREAD(simple_handle_connection(struct simple_stomp_state *s)) {
     PT_BEGIN(&s->pt);
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_handle_connection: start.\n");
+#endif
 
     PSOCK_INIT(&s->s, (uint8_t*) s->inputbuf, sizeof (s->inputbuf) - 1);
     PSOCK_WAIT_UNTIL(&s->s, PSOCK_NEWDATA(&s->s) || (s->frame != NULL));
@@ -82,7 +94,9 @@ PT_THREAD(simple_handle_connection(struct simple_stomp_state *s)) {
         PSOCK_SEND(&s->s, (uint8_t*) s->outputbuf, (unsigned int) s->outputbuf_len);
     }
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_handle_connection: stop.\n");
+#endif
     PT_END(&s->pt);
 }
 
@@ -93,7 +107,9 @@ simple_app(void *s) {
     char *str;
 #endif
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_app: start.\n");
+#endif
 
 #ifdef WITH_UDP
     if (uip_newdata()) {
@@ -119,32 +135,45 @@ simple_app(void *s) {
     }
 #endif
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_app: stop.\n");
+#endif
 }
 
 struct simple_stomp_state *
-simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *addr, uint16_t port,
-        char *host, char *login, char *pass) {
+simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *addr, uint16_t port, char *host, char *login, char *pass) {
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_connect: start.\n");
+#endif
 
 #ifdef WITH_UDP
+#ifdef SIMPLE_STOMP_TRACE
     printf("UDP connect\n");
+#endif
     s->conn = udp_new(addr, UIP_HTONS(port), s);
 #else
+#ifdef SIMPLE_STOMP_TRACE
     printf("TCP connect\n");
+#endif
     s->conn = tcp_connect(addr, UIP_HTONS(port), s);
 #endif
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("Connecting...\n");
+#endif
 
     if (s->conn == NULL) {
+#ifdef SIMPLE_STOMP_TRACE
         printf("Not connected.\n");
+#endif
         return NULL;
     }
 
 #ifdef WITH_UDP
     udp_bind(s->conn, UIP_HTONS(port + 1));
+#ifdef SIMPLE_STOMP_TRACE
     printf("Binding...\n");
+#endif
 #endif
 
     s->addr = addr;
@@ -154,7 +183,9 @@ simple_connect(struct simple_stomp_state *s, uip_ipaddr_t *addr, uint16_t port,
     s->login = login;
     s->pass = pass;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_connect: stop.\n");
+#endif
 
     return s;
 }
@@ -163,7 +194,9 @@ void
 simple_connected(struct simple_stomp_state *s) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_connected: start.\n");
+#endif
 
     headers = stomp_frame_new_header(stomp_header_accept_version, version);
     if (s->pass != NULL) {
@@ -182,15 +215,18 @@ simple_connected(struct simple_stomp_state *s) {
 
     s->frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_connected: stop.\n");
+#endif
 }
 
 void
-simple_stomp_subscribe(struct simple_stomp_state *s, char *id, char *destination,
-        char *ack) {
+simple_stomp_subscribe(struct simple_stomp_state *s, char *id, char *destination, char *ack) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_subscribe: start.\n");
+#endif
 
     if (ack != NULL) {
         headers = stomp_frame_new_header(stomp_header_ack, ack);
@@ -215,14 +251,18 @@ simple_stomp_subscribe(struct simple_stomp_state *s, char *id, char *destination
 
     s->frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_subscribe: stop.\n");
+#endif
 }
 
 void
 simple_stomp_unsubscribe(struct simple_stomp_state *s, char *id) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_unsubscribe: start.\n");
+#endif
 
     if (id != NULL) {
         headers = stomp_frame_new_header(stomp_header_id, id);
@@ -234,7 +274,9 @@ simple_stomp_unsubscribe(struct simple_stomp_state *s, char *id) {
 
     s->frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_unsubscribe: stop.\n");
+#endif
 }
 
 void
@@ -242,7 +284,9 @@ simple_stomp_send(struct simple_stomp_state *s, char *destination, char *type,
         char *length, char *receipt, char *tx, char *message) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_send: start.\n");
+#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -275,14 +319,18 @@ simple_stomp_send(struct simple_stomp_state *s, char *destination, char *type,
 
     s->frame = stomp_frame_new_frame(stomp_command_send, headers, message);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_send: stop.\n");
+#endif
 }
 
 void
 simple_stomp_begin(struct simple_stomp_state *s, char *tx) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_begin: start.\n");
+#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -294,14 +342,18 @@ simple_stomp_begin(struct simple_stomp_state *s, char *tx) {
 
     s->frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_begin: stop.\n");
+#endif
 }
 
 void
 simple_stomp_commit(struct simple_stomp_state *s, char *tx) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_commit: start.\n");
+#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -313,14 +365,18 @@ simple_stomp_commit(struct simple_stomp_state *s, char *tx) {
 
     s->frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_commit: stop.\n");
+#endif
 }
 
 void
 simple_stomp_abort(struct simple_stomp_state *s, char *tx) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_abort: start.\n");
+#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -332,14 +388,18 @@ simple_stomp_abort(struct simple_stomp_state *s, char *tx) {
 
     s->frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_abort: stop.\n");
+#endif
 }
 
 void
 simple_stomp_disconnect(struct simple_stomp_state *s, char *receipt) {
     struct stomp_header *headers = NULL;
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_disconnect: start.\n");
+#endif
 
     if (receipt != NULL) {
         headers = stomp_frame_new_header(stomp_header_receipt, receipt);
@@ -347,14 +407,20 @@ simple_stomp_disconnect(struct simple_stomp_state *s, char *receipt) {
 
     s->frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("simple_stomp_disconnect: stop.\n");
+#endif
 }
 
 void
 simple_disconnected(struct simple_stomp_state *s) {
+#ifdef SIMPLE_STOMP_TRACE
     printf("stomp_disconnected: start.\n");
+#endif
 
     printf("Disconnected.\n");
 
+#ifdef SIMPLE_STOMP_TRACE
     printf("stomp_disconnected: stop.\n");
+#endif
 }

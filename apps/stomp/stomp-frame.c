@@ -40,7 +40,7 @@ stomp_frame_add_header(const char *name, const char *value, struct stomp_header 
 }
 
 struct stomp_frame*
-stomp_frame_new_frame(const char *command, struct stomp_header *headers, 
+stomp_frame_new_frame(const char *command, struct stomp_header *headers,
         const char *payload) {
     struct stomp_frame *frame = NEW(struct stomp_frame);
 
@@ -79,7 +79,7 @@ stomp_frame_import(const char *stream, struct stomp_frame *frame) {
         header->next = frame->headers;
         frame->headers = header;
     }
-    
+
     offset = offset + 1;
 
     offset = stomp_tools_substr_to(stream, frame->payload, offset, STOMP_NULL);

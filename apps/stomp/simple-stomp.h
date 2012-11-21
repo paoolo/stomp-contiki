@@ -11,6 +11,7 @@
 #define SIMPLE_STOMP_INPUTBUF_SIZE 512
 
 #define WITH_UDP
+#define SIMPLE_STOMP_TRACE
 
 struct simple_stomp_state {
     struct pt pt;
