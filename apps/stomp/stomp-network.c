@@ -82,6 +82,9 @@ __senddata() {
 #endif
 
     if (network_state.buf == NULL) {
+#ifdef STOMP_NETWORK_TRACE
+        printf("__senddata: nothing to send, stop.\n");
+#endif
         return;
     }
 #ifndef WITH_UDP
@@ -93,7 +96,7 @@ __senddata() {
 #endif
 
 #ifdef WITH_UDP
-    uip_udp_packet_sendto(network_state.conn, network_state.buf + network_state.off, network_state.len, network_state.addr, UIP_HTONS(network_state.port));
+    uip_udp_packet_sendto(network_state.conn, network_state.buf, network_state.len, network_state.addr, UIP_HTONS(network_state.port));
     DELETE(network_state.buf);
 #else
     uip_send(network_state.buf + network_state.off, network_state.sentlen);
@@ -134,8 +137,10 @@ PROCESS_THREAD(stomp_network_send_process, ev, data) {
 #ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_send_process: start.\n");
 #endif
-
-    etimer_set(&et, CLOCK_CONF_SECOND * 3);
+    etimer_set(&et, CLOCK_CONF_SECOND * 30);
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
+    
+    etimer_set(&et, CLOCK_CONF_SECOND * 15);
     while (1) {
         PROCESS_WAIT_EVENT();
         if (etimer_expired(&et)) {
@@ -186,9 +191,9 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
 #ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_process: start.\n");
 #endif
-
+    
     __connect(&stomp_network_addr, stomp_network_port);
-
+    
     while (1) {
 #ifdef STOMP_NETWORK_TRACE
         printf("stomp_network_process: wait for any event.\n");
