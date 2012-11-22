@@ -283,6 +283,7 @@ stompc_received(char *buf, uint16_t len) {
     printf("stompc_received: starte.\n");
     printf("RECEIVED: len=%d, buf=%s\n", len, buf);
 #endif
+    /* TODO importing frame from string */
     stomp_received(NULL);
 #ifdef STOMPC_TRACE
     printf("stompc_received: stop.\n");

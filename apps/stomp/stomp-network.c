@@ -137,8 +137,14 @@ PROCESS_THREAD(stomp_network_send_process, ev, data) {
 #ifdef STOMP_NETWORK_TRACE
     printf("stomp_network_send_process: start.\n");
 #endif
+
+#ifdef WITH_UDP    
+#ifdef STOMP_NETWORK_TRACE
+    printf("stomp_network_send_process: waiting for UDP connection.\n");
+#endif
     etimer_set(&et, CLOCK_CONF_SECOND * 30);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
+#endif
 
     etimer_set(&et, CLOCK_CONF_SECOND * 15);
     while (1) {
