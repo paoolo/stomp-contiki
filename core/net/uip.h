@@ -156,7 +156,7 @@ typedef uip_eth_addr uip_lladdr_t;
  *
  * \hideinitializer
  */
-#define uip_sethostaddr(stomp_network_addr) uip_ipaddr_copy(&uip_hostaddr, (stomp_network_addr))
+#define uip_sethostaddr(ipaddr) uip_ipaddr_copy(&uip_hostaddr, (ipaddr))
 
 /**
  * Get the IP address of this host.
@@ -176,7 +176,7 @@ typedef uip_eth_addr uip_lladdr_t;
  *
  * \hideinitializer
  */
-#define uip_gethostaddr(stomp_network_addr) uip_ipaddr_copy((stomp_network_addr), &uip_hostaddr)
+#define uip_gethostaddr(ipaddr) uip_ipaddr_copy((ipaddr), &uip_hostaddr)
 
 /**
  * Set the default router's IP address.
@@ -188,7 +188,7 @@ typedef uip_eth_addr uip_lladdr_t;
  *
  * \hideinitializer
  */
-#define uip_setdraddr(stomp_network_addr) uip_ipaddr_copy(&uip_draddr, (stomp_network_addr))
+#define uip_setdraddr(ipaddr) uip_ipaddr_copy(&uip_draddr, (ipaddr))
 
 /**
  * Set the netmask.
@@ -200,7 +200,7 @@ typedef uip_eth_addr uip_lladdr_t;
  *
  * \hideinitializer
  */
-#define uip_setnetmask(stomp_network_addr) uip_ipaddr_copy(&uip_netmask, (stomp_network_addr))
+#define uip_setnetmask(ipaddr) uip_ipaddr_copy(&uip_netmask, (ipaddr))
 
 
 /**
@@ -211,7 +211,7 @@ typedef uip_eth_addr uip_lladdr_t;
  *
  * \hideinitializer
  */
-#define uip_getdraddr(stomp_network_addr) uip_ipaddr_copy((stomp_network_addr), &uip_draddr)
+#define uip_getdraddr(ipaddr) uip_ipaddr_copy((ipaddr), &uip_draddr)
 
 /**
  * Get the netmask.
@@ -221,7 +221,7 @@ typedef uip_eth_addr uip_lladdr_t;
  *
  * \hideinitializer
  */
-#define uip_getnetmask(stomp_network_addr) uip_ipaddr_copy((stomp_network_addr), &uip_netmask)
+#define uip_getnetmask(ipaddr) uip_ipaddr_copy((ipaddr), &uip_netmask)
 
 /** @} */
 
@@ -849,7 +849,7 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_udp_bind(conn, stomp_network_port) (conn)->lport = stomp_network_port
+#define uip_udp_bind(conn, port) (conn)->lport = port
 
 /**
  * Send a UDP datagram of length len on the current connection.
@@ -916,11 +916,11 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_ipaddr(stomp_network_addr, addr0,addr1,addr2,addr3) do {  \
-    (stomp_network_addr)->u8[0] = addr0;                              \
-    (stomp_network_addr)->u8[1] = addr1;                              \
-    (stomp_network_addr)->u8[2] = addr2;                              \
-    (stomp_network_addr)->u8[3] = addr3;                              \
+#define uip_ipaddr(ipaddr, addr0,addr1,addr2,addr3) do {  \
+    (ipaddr)->u8[0] = addr0;                              \
+    (ipaddr)->u8[1] = addr1;                              \
+    (ipaddr)->u8[2] = addr2;                              \
+    (ipaddr)->u8[3] = addr3;                              \
   } while(0)
 
 /**
@@ -930,15 +930,15 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_ip6addr(stomp_network_addr, addr0,addr1,addr2,addr3,addr4,addr5,addr6,addr7) do { \
-    (stomp_network_addr)->u16[0] = UIP_HTONS(addr0);                                      \
-    (stomp_network_addr)->u16[1] = UIP_HTONS(addr1);                                      \
-    (stomp_network_addr)->u16[2] = UIP_HTONS(addr2);                                      \
-    (stomp_network_addr)->u16[3] = UIP_HTONS(addr3);                                      \
-    (stomp_network_addr)->u16[4] = UIP_HTONS(addr4);                                      \
-    (stomp_network_addr)->u16[5] = UIP_HTONS(addr5);                                      \
-    (stomp_network_addr)->u16[6] = UIP_HTONS(addr6);                                      \
-    (stomp_network_addr)->u16[7] = UIP_HTONS(addr7);                                      \
+#define uip_ip6addr(ipaddr, addr0,addr1,addr2,addr3,addr4,addr5,addr6,addr7) do { \
+    (ipaddr)->u16[0] = UIP_HTONS(addr0);                                      \
+    (ipaddr)->u16[1] = UIP_HTONS(addr1);                                      \
+    (ipaddr)->u16[2] = UIP_HTONS(addr2);                                      \
+    (ipaddr)->u16[3] = UIP_HTONS(addr3);                                      \
+    (ipaddr)->u16[4] = UIP_HTONS(addr4);                                      \
+    (ipaddr)->u16[5] = UIP_HTONS(addr5);                                      \
+    (ipaddr)->u16[6] = UIP_HTONS(addr6);                                      \
+    (ipaddr)->u16[7] = UIP_HTONS(addr7);                                      \
   } while(0)
 
 /**
@@ -948,23 +948,23 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_ip6addr_u8(stomp_network_addr, addr0,addr1,addr2,addr3,addr4,addr5,addr6,addr7,addr8,addr9,addr10,addr11,addr12,addr13,addr14,addr15) do { \
-    (stomp_network_addr)->u8[0] = addr0;                                       \
-    (stomp_network_addr)->u8[1] = addr1;                                       \
-    (stomp_network_addr)->u8[2] = addr2;                                       \
-    (stomp_network_addr)->u8[3] = addr3;                                       \
-    (stomp_network_addr)->u8[4] = addr4;                                       \
-    (stomp_network_addr)->u8[5] = addr5;                                       \
-    (stomp_network_addr)->u8[6] = addr6;                                       \
-    (stomp_network_addr)->u8[7] = addr7;                                       \
-    (stomp_network_addr)->u8[8] = addr8;                                       \
-    (stomp_network_addr)->u8[9] = addr9;                                       \
-    (stomp_network_addr)->u8[10] = addr10;                                     \
-    (stomp_network_addr)->u8[11] = addr11;                                     \
-    (stomp_network_addr)->u8[12] = addr12;                                     \
-    (stomp_network_addr)->u8[13] = addr13;                                     \
-    (stomp_network_addr)->u8[14] = addr14;                                     \
-    (stomp_network_addr)->u8[15] = addr15;                                     \
+#define uip_ip6addr_u8(ipaddr, addr0,addr1,addr2,addr3,addr4,addr5,addr6,addr7,addr8,addr9,addr10,addr11,addr12,addr13,addr14,addr15) do { \
+    (ipaddr)->u8[0] = addr0;                                       \
+    (ipaddr)->u8[1] = addr1;                                       \
+    (ipaddr)->u8[2] = addr2;                                       \
+    (ipaddr)->u8[3] = addr3;                                       \
+    (ipaddr)->u8[4] = addr4;                                       \
+    (ipaddr)->u8[5] = addr5;                                       \
+    (ipaddr)->u8[6] = addr6;                                       \
+    (ipaddr)->u8[7] = addr7;                                       \
+    (ipaddr)->u8[8] = addr8;                                       \
+    (ipaddr)->u8[9] = addr9;                                       \
+    (ipaddr)->u8[10] = addr10;                                     \
+    (ipaddr)->u8[11] = addr11;                                     \
+    (ipaddr)->u8[12] = addr12;                                     \
+    (ipaddr)->u8[13] = addr13;                                     \
+    (ipaddr)->u8[14] = addr14;                                     \
+    (ipaddr)->u8[15] = addr15;                                     \
   } while(0)
 
 
@@ -1117,7 +1117,7 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_ipaddr1(stomp_network_addr) ((stomp_network_addr)->u8[0])
+#define uip_ipaddr1(ipaddr) ((ipaddr)->u8[0])
 
 /**
  * Pick the second octet of an IP address.
@@ -1137,7 +1137,7 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_ipaddr2(stomp_network_addr) ((stomp_network_addr)->u8[1])
+#define uip_ipaddr2(ipaddr) ((ipaddr)->u8[1])
 
 /**
  * Pick the third octet of an IP address.
@@ -1157,7 +1157,7 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_ipaddr3(stomp_network_addr) ((stomp_network_addr)->u8[2])
+#define uip_ipaddr3(ipaddr) ((ipaddr)->u8[2])
 
 /**
  * Pick the fourth octet of an IP address.
@@ -1177,7 +1177,7 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
  *
  * \hideinitializer
  */
-#define uip_ipaddr4(stomp_network_addr) ((stomp_network_addr)->u8[3])
+#define uip_ipaddr4(ipaddr) ((ipaddr)->u8[3])
 
 /**
  * Convert 16-bit quantity from host byte order to network byte order.
@@ -2008,11 +2008,11 @@ CCIF extern uip_lladdr_t uip_lladdr;
 
 /** \brief set IP address a to the link local all-routers multicast address */
 #define uip_create_linklocal_allrouters_mcast(a) uip_ip6addr(a, 0xff02, 0, 0, 0, 0, 0, 0, 0x0002)
-#define uip_create_linklocal_prefix(stomp_network_addr) do { \
-    (stomp_network_addr)->u16[0] = UIP_HTONS(0xfe80);            \
-    (stomp_network_addr)->u16[1] = 0;                        \
-    (stomp_network_addr)->u16[2] = 0;                        \
-    (stomp_network_addr)->u16[3] = 0;                        \
+#define uip_create_linklocal_prefix(ipaddr) do { \
+    (ipaddr)->u16[0] = UIP_HTONS(0xfe80);            \
+    (ipaddr)->u16[1] = 0;                        \
+    (ipaddr)->u16[2] = 0;                        \
+    (ipaddr)->u16[3] = 0;                        \
   } while(0)
 
 /**

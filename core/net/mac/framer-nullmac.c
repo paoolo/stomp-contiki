@@ -45,10 +45,10 @@
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
-#define PRINTADDR(stomp_network_addr) PRINTF(" %02x%02x:%02x%02x:%02x%02x:%02x%02x ", ((uint8_t *)stomp_network_addr)[0], ((uint8_t *)stomp_network_addr)[1], ((uint8_t *)stomp_network_addr)[2], ((uint8_t *)stomp_network_addr)[3], ((uint8_t *)stomp_network_addr)[4], ((uint8_t *)stomp_network_addr)[5], ((uint8_t *)stomp_network_addr)[6], ((uint8_t *)stomp_network_addr)[7])
+#define PRINTADDR(ipaddr) PRINTF(" %02x%02x:%02x%02x:%02x%02x:%02x%02x ", ((uint8_t *)ipaddr)[0], ((uint8_t *)ipaddr)[1], ((uint8_t *)ipaddr)[2], ((uint8_t *)ipaddr)[3], ((uint8_t *)ipaddr)[4], ((uint8_t *)ipaddr)[5], ((uint8_t *)ipaddr)[6], ((uint8_t *)ipaddr)[7])
 #else
 #define PRINTF(...)
-#define PRINTADDR(stomp_network_addr)
+#define PRINTADDR(ipaddr)
 #endif
 
 struct nullmac_hdr {

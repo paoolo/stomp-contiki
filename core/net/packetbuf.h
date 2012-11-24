@@ -387,7 +387,7 @@ extern struct packetbuf_addr packetbuf_addrs[];
 
 static int               packetbuf_set_attr(uint8_t type, const packetbuf_attr_t val);
 static packetbuf_attr_t    packetbuf_attr(uint8_t type);
-static int               packetbuf_set_addr(uint8_t type, const rimeaddr_t *stomp_network_addr);
+static int               packetbuf_set_addr(uint8_t type, const rimeaddr_t *ipaddr);
 static const rimeaddr_t *packetbuf_addr(uint8_t type);
 
 static inline int
@@ -404,10 +404,10 @@ packetbuf_attr(uint8_t type)
 }
 
 static inline int
-packetbuf_set_addr(uint8_t type, const rimeaddr_t *stomp_network_addr)
+packetbuf_set_addr(uint8_t type, const rimeaddr_t *ipaddr)
 {
 /*   packetbuf_addrs[type - PACKETBUF_ADDR_FIRST].type = type; */
-  rimeaddr_copy(&packetbuf_addrs[type - PACKETBUF_ADDR_FIRST].addr, stomp_network_addr);
+  rimeaddr_copy(&packetbuf_addrs[type - PACKETBUF_ADDR_FIRST].addr, ipaddr);
   return 1;
 }
 

@@ -30,16 +30,16 @@ extern struct stomp_network_state network_state;
 
 extern struct stomp_queue network_send_queue;
 
-extern uip_ipaddr_t stomp_network_addr;
-extern int stomp_network_port;
+extern uip_ipaddr_t ipaddr;
+extern int port;
 
 #if UIP_CONF_IPV6 > 0
-extern int stomp_network_addr_num[];
+extern int addr[];
 #else
-extern uint8_t stomp_network_addr_num[];
+extern uint8_t addr[];
 #endif
 
-PROCESS_NAME(stomp_network_process);
+PROCESS_NAME(ultra_simple_stomp_network_process);
 PROCESS_NAME(stomp_network_send_process);
 
 unsigned char

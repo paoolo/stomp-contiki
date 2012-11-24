@@ -50,11 +50,11 @@
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
-#define PRINT6ADDR(stomp_network_addr) PRINTF(" %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x ", ((uint8_t *)stomp_network_addr)[0], ((uint8_t *)stomp_network_addr)[1], ((uint8_t *)stomp_network_addr)[2], ((uint8_t *)stomp_network_addr)[3], ((uint8_t *)stomp_network_addr)[4], ((uint8_t *)stomp_network_addr)[5], ((uint8_t *)stomp_network_addr)[6], ((uint8_t *)stomp_network_addr)[7], ((uint8_t *)stomp_network_addr)[8], ((uint8_t *)stomp_network_addr)[9], ((uint8_t *)stomp_network_addr)[10], ((uint8_t *)stomp_network_addr)[11], ((uint8_t *)stomp_network_addr)[12], ((uint8_t *)stomp_network_addr)[13], ((uint8_t *)stomp_network_addr)[14], ((uint8_t *)stomp_network_addr)[15])
+#define PRINT6ADDR(ipaddr) PRINTF(" %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x ", ((uint8_t *)ipaddr)[0], ((uint8_t *)ipaddr)[1], ((uint8_t *)ipaddr)[2], ((uint8_t *)ipaddr)[3], ((uint8_t *)ipaddr)[4], ((uint8_t *)ipaddr)[5], ((uint8_t *)ipaddr)[6], ((uint8_t *)ipaddr)[7], ((uint8_t *)ipaddr)[8], ((uint8_t *)ipaddr)[9], ((uint8_t *)ipaddr)[10], ((uint8_t *)ipaddr)[11], ((uint8_t *)ipaddr)[12], ((uint8_t *)ipaddr)[13], ((uint8_t *)ipaddr)[14], ((uint8_t *)ipaddr)[15])
 #define PRINTLLADDR(lladdr) PRINTF(" %02x:%02x:%02x:%02x:%02x:%02x ",lladdr->addr[0], lladdr->addr[1], lladdr->addr[2], lladdr->addr[3],lladdr->addr[4], lladdr->addr[5])
 #else
 #define PRINTF(...)
-#define PRINT6ADDR(stomp_network_addr)
+#define PRINT6ADDR(ipaddr)
 #endif
 
 #define UIP_IP_BUF                ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])

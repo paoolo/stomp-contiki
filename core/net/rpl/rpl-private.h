@@ -48,22 +48,22 @@
 /*---------------------------------------------------------------------------*/
 /** \brief Is IPv6 address addr the link-local, all-RPL-nodes
     multicast address? */
-#define uip_is_addr_linklocal_rplnodes_mcast(stomp_network_addr)	    \
-  ((stomp_network_addr)->u8[0] == 0xff) &&				    \
-  ((stomp_network_addr)->u8[1] == 0x02) &&				    \
-  ((stomp_network_addr)->u16[1] == 0) &&				    \
-  ((stomp_network_addr)->u16[2] == 0) &&				    \
-  ((stomp_network_addr)->u16[3] == 0) &&				    \
-  ((stomp_network_addr)->u16[4] == 0) &&				    \
-  ((stomp_network_addr)->u16[5] == 0) &&				    \
-  ((stomp_network_addr)->u16[6] == 0) &&				    \
-  ((stomp_network_addr)->u8[14] == 0) &&				    \
-  ((stomp_network_addr)->u8[15] == 0x1a))
+#define uip_is_addr_linklocal_rplnodes_mcast(ipaddr)	    \
+  ((ipaddr)->u8[0] == 0xff) &&				    \
+  ((ipaddr)->u8[1] == 0x02) &&				    \
+  ((ipaddr)->u16[1] == 0) &&				    \
+  ((ipaddr)->u16[2] == 0) &&				    \
+  ((ipaddr)->u16[3] == 0) &&				    \
+  ((ipaddr)->u16[4] == 0) &&				    \
+  ((ipaddr)->u16[5] == 0) &&				    \
+  ((ipaddr)->u16[6] == 0) &&				    \
+  ((ipaddr)->u8[14] == 0) &&				    \
+  ((ipaddr)->u8[15] == 0x1a))
 
 /** \brief Set IP address addr to the link-local, all-rpl-nodes
     multicast address. */
-#define uip_create_linklocal_rplnodes_mcast(stomp_network_addr)	\
-  uip_ip6addr((stomp_network_addr), 0xff02, 0, 0, 0, 0, 0, 0, 0x001a)
+#define uip_create_linklocal_rplnodes_mcast(ipaddr)	\
+  uip_ip6addr((ipaddr), 0xff02, 0, 0, 0, 0, 0, 0, 0x001a)
 /*---------------------------------------------------------------------------*/
 /* RPL message types */
 #define RPL_CODE_DIS                   0x00   /* DAG Information Solicitation */

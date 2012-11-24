@@ -92,9 +92,9 @@ struct uip_fw_netif {
  *
  * \hideinitializer
  */
-#define uip_fw_setipaddr(netif, stomp_network_addr) \
-        do { (netif)->ipaddr[0] = ((uint16_t *)(stomp_network_addr))[0]; \
-             (netif)->ipaddr[1] = ((uint16_t *)(stomp_network_addr))[1]; } while(0)
+#define uip_fw_setipaddr(netif, ipaddr) \
+        do { (netif)->ipaddr[0] = ((uint16_t *)(ipaddr))[0]; \
+             (netif)->ipaddr[1] = ((uint16_t *)(ipaddr))[1]; } while(0)
 /**
  * Set the netmask of a network interface.
  *
@@ -104,9 +104,9 @@ struct uip_fw_netif {
  *
  * \hideinitializer
  */
-#define uip_fw_setnetmask(netif, stomp_network_addr) \
-        do { (netif)->netmask[0] = ((uint16_t *)(stomp_network_addr))[0]; \
-             (netif)->netmask[1] = ((uint16_t *)(stomp_network_addr))[1]; } while(0)
+#define uip_fw_setnetmask(netif, ipaddr) \
+        do { (netif)->netmask[0] = ((uint16_t *)(ipaddr))[0]; \
+             (netif)->netmask[1] = ((uint16_t *)(ipaddr))[1]; } while(0)
 
 void uip_fw_init(void);
 uint8_t uip_fw_forward(void);

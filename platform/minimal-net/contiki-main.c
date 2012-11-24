@@ -94,7 +94,7 @@ PROCESS_THREAD(border_router_process, ev, data)
       
 #else
       {
-	static void sprint_ip6(uip_ip6addr_t stomp_network_addr);
+	static void sprint_ip6(uip_ip6addr_t ipaddr);
 	int i;
 	uip_ip6addr_t ipaddr;
 #ifdef HARD_CODED_ADDRESS
@@ -229,28 +229,28 @@ main(void)
   /* Set default IP addresses if not specified */
 #if !UIP_CONF_IPV6
   {
-    uip_ipaddr_t stomp_network_addr;
+    uip_ipaddr_t ipaddr;
 
-    uip_gethostaddr(&stomp_network_addr);
-    if(stomp_network_addr.u8[0] == 0) {
-      uip_ipaddr(&stomp_network_addr, 10,1,1,1);
+    uip_gethostaddr(&ipaddr);
+    if(ipaddr.u8[0] == 0) {
+      uip_ipaddr(&ipaddr, 10,1,1,1);
     }
-    printf("IP Address:  %d.%d.%d.%d\n", uip_ipaddr_to_quad(&stomp_network_addr));
-    uip_sethostaddr(&stomp_network_addr);
+    printf("IP Address:  %d.%d.%d.%d\n", uip_ipaddr_to_quad(&ipaddr));
+    uip_sethostaddr(&ipaddr);
     
-    uip_getnetmask(&stomp_network_addr);
-    if(stomp_network_addr.u8[0] == 0) {
-      uip_ipaddr(&stomp_network_addr, 255,0,0,0);
-      uip_setnetmask(&stomp_network_addr);
+    uip_getnetmask(&ipaddr);
+    if(ipaddr.u8[0] == 0) {
+      uip_ipaddr(&ipaddr, 255,0,0,0);
+      uip_setnetmask(&ipaddr);
     }
-    printf("Subnet Mask: %d.%d.%d.%d\n", uip_ipaddr_to_quad(&stomp_network_addr));
+    printf("Subnet Mask: %d.%d.%d.%d\n", uip_ipaddr_to_quad(&ipaddr));
     
-    uip_getdraddr(&stomp_network_addr);
-    if(stomp_network_addr.u8[0] == 0) {
-      uip_ipaddr(&stomp_network_addr, 10,1,1,100);
-      uip_setdraddr(&stomp_network_addr);
+    uip_getdraddr(&ipaddr);
+    if(ipaddr.u8[0] == 0) {
+      uip_ipaddr(&ipaddr, 10,1,1,100);
+      uip_setdraddr(&ipaddr);
     }
-    printf("Def. Router: %d.%d.%d.%d\n", uip_ipaddr_to_quad(&stomp_network_addr));
+    printf("Def. Router: %d.%d.%d.%d\n", uip_ipaddr_to_quad(&ipaddr));
   }
 #else /* UIP_CONF_IPV6 */
 

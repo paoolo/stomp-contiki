@@ -1,11 +1,11 @@
 #include "ultra-simple-stomp.h"
+#include "ultra-simple-stomp-network.h"
 
 #include "stomp-tools.h"
 #include "stomp-strings.h"
 
 #include "contiki.h"
 #include "contiki-net.h"
-#include "contiki-lib.h"
 
 #include "uip-debug.h"
 
@@ -15,94 +15,7 @@ const char stomp_version_default[4] = {0x31, 0x2e, 0x31,};
 
 const char stomp_content_type_default[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
 
-struct ultra_simple_stomp state;
-
-static void
-__sent() {
-    free(state.buf);
-    state.buf = NULL;
-    stomp_net_sent(state);
-}
-
-static void
-__send() {
-    if (state.buf == NULL) {
-        return;
-    }
-#ifndef WITH_UDP
-    if (state.len > uip_mss()) {
-        state.sentlen = uip_mss();
-    } else {
-        state.sentlen = state.len;
-    }
-#endif
-#ifdef WITH_UDP
-    uip_udp_packet_sendto(state.conn, state.buf + off, state.len, state.addr, UIP_HTONS(state.port));
-    __sent();
-#else
-    uip_send(state.buf + state.off, state.sentlen);
-#endif
-}
-
-#ifndef WITH_UDP
-
-static void
-__acked() {
-    state.len -= state.sentlen;
-    if (state.len == 0) {
-        __sent();
-    } else {
-        state.off += state.sentlen;
-    }
-    state.sentlen = 0;
-}
-#endif
-
-void
-stomp_app() {
-#ifndef WITH_UDP
-    if (uip_connected()) {
-        state.flags = 0;
-        stomp_net_connected();
-        __send();
-        return;
-    }
-    if (uip_closed()) {
-        stomp_net_closed();
-    }
-    if (uip_aborted()) {
-        stomp_net_aborted();
-    }
-    if (uip_timedout()) {
-        stomp_net_timedout();
-    }
-    if (state.flags & ULTRA_SIMPLE_STOMP_FLAG_DISCONNECT) {
-        uip_close();
-        return;
-    }
-    if (state.flags & ULTRA_SIMPLE_STOMP_FLAG_ABORT) {
-        uip_abort();
-        return;
-    }
-    if (uip_acked()) {
-        __acked();
-    }
-#endif
-    if (uip_newdata()) {
-        stomp_net_received((char*) uip_appdata, uip_datalen());
-    }
-#ifndef WITH_UDP
-    if (uip_rexmit() || uip_newdata() || uip_acked()) {
-        __send();
-
-    } else if (uip_poll()) {
-        __send();
-    }
-#endif
-    if (state.buf != NULL) {
-        __send();
-    }
-}
+struct pt pt;
 
 void
 stomp_connect(char *host, char* login, char* pass) {
@@ -185,8 +98,7 @@ stomp_connect(char *host, char* login, char* pass) {
         PRINTA("CONNECT: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
@@ -211,7 +123,7 @@ stomp_subscribe(char *id, char *destination, char *ack) {
     }
     if (ack == NULL) {
         PRINTA("No ack. Set to 'auto'.\n");
-        ack = (char*)stomp_header_auto;
+        ack = (char*) stomp_header_auto;
         ack_len = 4;
         total_len += STOMP_HEADER_ACK_LEN + 1 + ack_len + 1;
     } else {
@@ -267,8 +179,7 @@ stomp_subscribe(char *id, char *destination, char *ack) {
         PRINTA("SUBSCRIBE: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
@@ -311,8 +222,7 @@ stomp_unsubscribe(char *id) {
         PRINTA("UNSUBSCRIBE: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
@@ -330,7 +240,7 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
     }
     if (type == NULL) {
         PRINTA("No content type. Set to default 'plain/text'.\n");
-        type = (char*)stomp_content_type_default;
+        type = (char*) stomp_content_type_default;
         type_len = 10;
         total_len += STOMP_HEADER_CONTENT_TYPE_LEN + 1 + type_len + 1;
     } else {
@@ -361,8 +271,8 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
         PRINTA("No message. Abort SEND.\n");
         return;
     } else {
-        message_len = strlen(length);
-        total_len += message_len + 1;
+        message_len = strlen(message);
+        total_len += message_len;
     }
     total_len += 1;
 
@@ -433,15 +343,168 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
 
     if (message != NULL) {
         memcpy(buf + off, message, message_len);
-        off += message_len + 1;
+        off += message_len;
     }
 
     if (off != total_len) {
         PRINTA("SEND: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
+    stomp_net_send(buf, total_len + 1);
+}
+
+void
+stomp_ack(char *subscription, char *message_id, char *tx) {
+    int off = 0, total_len = 0, subscription_len = 0, message_id_len = 0, tx_len = 0;
+    char *buf = NULL;
+
+    total_len = STOMP_COMMAND_ACK_LEN + 1;
+    if (subscription == NULL) {
+        PRINTA("No subscription. Abort ACK.\n");
+        return;
+    } else {
+        subscription_len = strlen(subscription);
+        total_len += STOMP_HEADER_SUBSCRIPTION_LEN + 1 + subscription_len + 1;
+    }
+    if (message_id == NULL) {
+        PRINTA("No message-id. Abort ACK.\n");
+        return;
+    } else {
+        message_id_len = strlen(message_id);
+        total_len += STOMP_HEADER_MESSAGE_ID_LEN + 1 + message_id_len + 1;
+    }
+    if (tx == NULL) {
+        PRINTA("No transaction. Abort ACK.\n");
+        return;
+    } else {
+        tx_len = strlen(tx);
+        total_len += STOMP_HEADER_TRANSACTION_LEN + 1 + tx_len + 1;
+    }
+    total_len += 1;
+
+    buf = NEW_ARRAY(char, total_len + 1);
+
+    memcpy(buf, stomp_command_ack, STOMP_COMMAND_ACK_LEN);
+    off += STOMP_COMMAND_ACK_LEN;
+    *(buf + off) = STOMP_NEW_LINE;
+    off += 1;
+
+    if (subscription != NULL) {
+        memcpy(buf + off, stomp_header_subscription, STOMP_HEADER_SUBSCRIPTION_LEN);
+        off += STOMP_HEADER_SUBSCRIPTION_LEN;
+        *(buf + off) = STOMP_COLON;
+        off += 1;
+        memcpy(buf + off, subscription, subscription_len);
+        off += subscription_len;
+        *(buf + off) = STOMP_NEW_LINE;
+        off += 1;
+    }
+    if (message_id != NULL) {
+        memcpy(buf + off, stomp_header_message_id, STOMP_HEADER_MESSAGE_ID_LEN);
+        off += STOMP_HEADER_MESSAGE_ID_LEN;
+        *(buf + off) = STOMP_COLON;
+        off += 1;
+        memcpy(buf + off, message_id, message_id_len);
+        off += message_id_len;
+        *(buf + off) = STOMP_NEW_LINE;
+        off += 1;
+    }
+    if (tx != NULL) {
+        memcpy(buf + off, stomp_header_transaction, STOMP_HEADER_TRANSACTION_LEN);
+        off += STOMP_HEADER_TRANSACTION_LEN;
+        *(buf + off) = STOMP_COLON;
+        off += 1;
+        memcpy(buf + off, tx, tx_len);
+        off += tx_len;
+        *(buf + off) = STOMP_NEW_LINE;
+        off += 1;
+    }
+
+    *(buf + off) = STOMP_NEW_LINE;
+    off += 1;
+
+    if (off != total_len) {
+        PRINTA("ACK: off(%d) != total_len(%d).\n", off, total_len);
+    }
+    PRINTA("\n^%s@\n", buf);
+    stomp_net_send(buf, total_len + 1);
+}
+
+void
+stomp_nack(char *subscription, char *message_id, char *tx) {
+    int off = 0, total_len = 0, subscription_len = 0, message_id_len = 0, tx_len = 0;
+    char *buf = NULL;
+
+    total_len = STOMP_COMMAND_NACK_LEN + 1;
+    if (subscription == NULL) {
+        PRINTA("No subscription. Abort ACK.\n");
+        return;
+    } else {
+        subscription_len = strlen(subscription);
+        total_len += STOMP_HEADER_SUBSCRIPTION_LEN + 1 + subscription_len + 1;
+    }
+    if (message_id == NULL) {
+        PRINTA("No message-id. Abort ACK.\n");
+        return;
+    } else {
+        message_id_len = strlen(message_id);
+        total_len += STOMP_HEADER_MESSAGE_ID_LEN + 1 + message_id_len + 1;
+    }
+    if (tx == NULL) {
+        PRINTA("No transaction. Abort ACK.\n");
+        return;
+    } else {
+        tx_len = strlen(tx);
+        total_len += STOMP_HEADER_TRANSACTION_LEN + 1 + tx_len + 1;
+    }
+    total_len += 1;
+
+    buf = NEW_ARRAY(char, total_len + 1);
+
+    memcpy(buf, stomp_command_nack, STOMP_COMMAND_NACK_LEN);
+    off += STOMP_COMMAND_NACK_LEN;
+    *(buf + off) = STOMP_NEW_LINE;
+    off += 1;
+
+    if (subscription != NULL) {
+        memcpy(buf + off, stomp_header_subscription, STOMP_HEADER_SUBSCRIPTION_LEN);
+        off += STOMP_HEADER_SUBSCRIPTION_LEN;
+        *(buf + off) = STOMP_COLON;
+        off += 1;
+        memcpy(buf + off, subscription, subscription_len);
+        off += subscription_len;
+        *(buf + off) = STOMP_NEW_LINE;
+        off += 1;
+    }
+    if (message_id != NULL) {
+        memcpy(buf + off, stomp_header_message_id, STOMP_HEADER_MESSAGE_ID_LEN);
+        off += STOMP_HEADER_MESSAGE_ID_LEN;
+        *(buf + off) = STOMP_COLON;
+        off += 1;
+        memcpy(buf + off, message_id, message_id_len);
+        off += message_id_len;
+        *(buf + off) = STOMP_NEW_LINE;
+        off += 1;
+    }
+    if (tx != NULL) {
+        memcpy(buf + off, stomp_header_transaction, STOMP_HEADER_TRANSACTION_LEN);
+        off += STOMP_HEADER_TRANSACTION_LEN;
+        *(buf + off) = STOMP_COLON;
+        off += 1;
+        memcpy(buf + off, tx, tx_len);
+        off += tx_len;
+        *(buf + off) = STOMP_NEW_LINE;
+        off += 1;
+    }
+
+    *(buf + off) = STOMP_NEW_LINE;
+    off += 1;
+
+    if (off != total_len) {
+        PRINTA("ACK: off(%d) != total_len(%d).\n", off, total_len);
+    }
+    PRINTA("\n^%s@\n", buf);
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
@@ -484,8 +547,7 @@ stomp_begin(char *tx) {
         PRINTA("BEGIN: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
@@ -528,8 +590,7 @@ stomp_commit(char *tx) {
         PRINTA("BEGIN: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
@@ -572,8 +633,7 @@ stomp_abort(char *tx) {
         PRINTA("ABORT: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
@@ -616,59 +676,23 @@ stomp_disconnect(char *receipt) {
         PRINTA("DISCONNECT: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("\n^%s@\n", buf);
-    
-    DELETE(buf);
-}
-
-/* Ultra-simple-stomp network section */
-
-void
-stomp_net_connect();
-
-#ifndef WITH_UDP
-
-void
-stomp_net_connected() {
-    PRINTA("Connected.\n");
-}
-
-void
-stomp_net_timedout() {
-    PRINTA("Timedout.\n");
-}
-
-void
-stomp_net_abort() {
-    state.flags = ULTRA_SIMPLE_STOMP_FLAG_ABORT;
-}
-
-void
-stomp_net_aborted() {
-    PRINTA("Aborted.\n");
-}
-
-void
-stomp_net_close() {
-    state.flags = ULTRA_SIMPLE_STOMP_FLAG_DISCONNECT;
-}
-
-void
-stomp_net_closed() {
-    PRINTA("Closed.\n");
-}
-#endif
-
-void
-stomp_net_send(char *buf, int len) {
-    /* TODO KURDE */
+    stomp_net_send(buf, total_len + 1);
 }
 
 void
 stomp_net_sent() {
     PRINTA("Sent.\n");
+    stomp_sent();
 }
 
 void
 stomp_net_received(char *buf, int len) {
     PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
+    stomp_received(buf, len);
+}
+
+void
+stomp_net_connected() {
+    PRINTA("Connected.\n");
+    stomp_connected();
 }

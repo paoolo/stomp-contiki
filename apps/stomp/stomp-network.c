@@ -12,18 +12,18 @@ struct stomp_network_state network_state;
 
 struct stomp_queue network_send_queue;
 
-uip_ipaddr_t stomp_network_addr;
-int stomp_network_port = 61613;
+uip_ipaddr_t ipaddr;
+int port = 61613;
 
 #if UIP_CONF_IPV6 > 0
-int stomp_network_addr_num[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
+int addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
 // int stomp_network_addr_num[] = {0xaaaa, 0, 0, 0, 0x280, 0xe102, 0, 0x4874};
 // int stomp_network_addr_num[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
 #else
-uint8_t stomp_network_addr_num[] = {10, 1, 1, 100};
+uint8_t addr[] = {10, 1, 1, 100};
 #endif
 
-PROCESS(stomp_network_process, "STOMP network process");
+PROCESS(ultra_simple_stomp_network_process, "STOMP network process");
 PROCESS(stomp_network_send_process, "STOMP network send process");
 
 static void
@@ -138,7 +138,7 @@ PROCESS_THREAD(stomp_network_send_process, ev, data) {
 #endif
                 network_state.len = stomp_queue_get_len(&network_send_queue);
                 stomp_queue_remove(&network_send_queue);
-                process_post(&stomp_network_process, PROCESS_EVENT_CONTINUE, NULL);
+                process_post(&ultra_simple_stomp_network_process, PROCESS_EVENT_CONTINUE, NULL);
             } else {
                 network_state.len = 0;
             }
@@ -158,12 +158,12 @@ PROCESS_THREAD(stomp_network_send_process, ev, data) {
     PROCESS_END();
 }
 
-PROCESS_THREAD(stomp_network_process, ev, data) {
+PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
 
 #if UIP_CONF_IPV6 > 0
-    uip_ip6addr(&stomp_network_addr, stomp_network_addr_num[0], stomp_network_addr_num[1], stomp_network_addr_num[2], stomp_network_addr_num[3], stomp_network_addr_num[4], stomp_network_addr_num[5], stomp_network_addr_num[6], stomp_network_addr_num[7]);
+    uip_ip6addr(&ipaddr, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
 #else
-    uip_ipaddr(&stomp_network_addr, stomp_network_addr_num[0], stomp_network_addr_num[1], stomp_network_addr_num[2], stomp_network_addr_num[3]);
+    uip_ipaddr(&ipaddr, addr[0], addr[1], addr[2], addr[3]);
 #endif
 
     PROCESS_BEGIN();
@@ -171,7 +171,7 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
     PRINTA("stomp_network_process: start.\n");
 #endif
 
-    __connect(&stomp_network_addr, stomp_network_port);
+    __connect(&ipaddr, port);
 
     while (1) {
 #ifdef STOMP_NETWORK_TRACE
