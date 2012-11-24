@@ -52,7 +52,7 @@ __acked() {
 #endif
 
 int
-addr[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
+addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
 
 uip_ipaddr_t
 ipaddr;
@@ -186,7 +186,7 @@ stomp_net_closed() {
 #endif
 
 void
-stomp_net_send(char *buf, int len) {
+stomp_net_send(struct process *proc, char *buf, int len) {
     state.buf = buf;
     state.len = len;
 #ifdef WITH_UDP

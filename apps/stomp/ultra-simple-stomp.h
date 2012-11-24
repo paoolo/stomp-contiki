@@ -5,74 +5,74 @@
 #define	ULTRA_SIMPLE_STOMP_H
 
 void
-stomp_connect(char *host, char* login, char* pass);
+stomp_connect(struct process *proc, char *host, char* login, char* pass);
 
 #define STOMP_CONNECT(host, login, pass) \
-        stomp_connect(host, login, pass); \
-        PROCESS_WAIT_EVENT();
+        stomp_connect(PROCESS_CURRENT(), host, login, pass); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_subscribe(char *id, char *destination, char *ack);
+stomp_subscribe(struct process *proc, char *id, char *destination, char *ack);
 
 #define STOMP_SUBSCRIBE(id, destination, ack) \
-        stomp_subscribe(id, destination, ack); \
-        PROCESS_WAIT_EVENT();
+        stomp_subscribe(PROCESS_CURRENT(), id, destination, ack); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_unsubscribe(char *id);
+stomp_unsubscribe(struct process *proc, char *id);
 
 #define STOMP_UNSUBSCRIBE(id) \
-        stomp_unsubscribe(id); \
-        PROCESS_WAIT_EVENT();
+        stomp_unsubscribe(PROCESS_CURRENT(), id); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_send(char *destination, char *type, char *length, char *receipt, char *tx, char *message);
+stomp_send(struct process *proc, char *destination, char *type, char *length, char *receipt, char *tx, char *message);
 
 #define STOMP_SEND(destination, type, length, receipt, tx, message) \
-        stomp_send(destination, type, length, receipt, tx, message); \
-        PROCESS_WAIT_EVENT();
+        stomp_send(PROCESS_CURRENT(), destination, type, length, receipt, tx, message); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_ack(char *subscription, char *message_id, char *tx);
+stomp_ack(struct process *proc, char *subscription, char *message_id, char *tx);
 
 #define STOMP_ACK(subscription, message_id, tx) \
-        stomp_ack(subscription, message_id, tx); \
-        PROCESS_WAIT_EVENT();
+        stomp_ack(PROCESS_CURRENT(), subscription, message_id, tx); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_nack(char *subscription, char *message_id, char *tx);
+stomp_nack(struct process *proc, char *subscription, char *message_id, char *tx);
 
 #define STOMP_NACK(subscription, message_id, tx) \
-        stomp_nack(subscription, message_id, tx); \
-        PROCESS_WAIT_EVENT();
+        stomp_nack(PROCESS_CURRENT(), subscription, message_id, tx); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_begin(char *tx);
+stomp_begin(struct process *proc, char *tx);
 
 #define STOMP_BEGIN(tx) \
-        stomp_begin(tx); \
-        PROCESS_WAIT_EVENT();
+        stomp_begin(PROCESS_CURRENT(), tx); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_commit(char *tx);
+stomp_commit(struct process *proc, char *tx);
 
 #define STOMP_COMMIT(tx) \
-        stomp_commit(tx); \
-        PROCESS_WAIT_EVENT();
+        stomp_commit(PROCESS_CURRENT(), tx); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_abort(char *tx);
+stomp_abort(struct process *proc, char *tx);
 
 #define STOMP_ABORT(tx) \
-        stomp_abort(tx); \
-        PROCESS_WAIT_EVENT();
+        stomp_abort(PROCESS_CURRENT(), tx); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
-stomp_disconnect(char *receipt);
+stomp_disconnect(struct process *proc, char *receipt);
 
 #define STOMP_DISCONNECT(receipt) \
-        stomp_disconnect(receipt); \
-        PROCESS_WAIT_EVENT();
+        stomp_disconnect(PROCESS_CURRENT(), receipt); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
 void
 stomp_sent();

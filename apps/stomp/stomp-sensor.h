@@ -17,6 +17,7 @@
 #define STOMP_SENSOR_PERIODIC_NONE      0b000000
 
 struct stomp_sensor {
+    char *name;
     int update;
     int periodic;
     int last;
@@ -33,6 +34,7 @@ PROCESS_THREAD(PROCESS_NAME, ev, data) { \
     etimer_set(&et, CLOCK_CONF_SECOND * FREQ); \
     while (1) { \
         PROCESS_WAIT_EVENT(); \
+        PROCESS_NAME##_data.name = #PROCESS_NAME; \
         PROCESS_NAME##_data.last = PROCESS_NAME##_data.value; \
         PROCESS_NAME##_data.value = NEXT_VALUE(MIN, MAX, DELTA, STEP, PROCESS_NAME##_data.value); \
         printf(#PROCESS_NAME "_value = %d\n", PROCESS_NAME##_data.value); \
@@ -49,8 +51,6 @@ struct stomp_sensor * stomp_sensor_processes[] = {__VA_ARGS__, NULL}
 #else
 #error "C compiler must support __VA_ARGS__ macro"
 #endif
-
-PROCESS_NAME(stomp_sensors);
 
 int stomp_sensor_const(int min, int max, int delta, int step, int value);
 

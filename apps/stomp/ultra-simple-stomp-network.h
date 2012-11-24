@@ -56,7 +56,7 @@ stomp_net_closed();
 #endif
 
 void
-stomp_net_send(char *buf, int len);
+stomp_net_send(struct process *proc, char *buf, int len);
 
 void
 stomp_net_sent();
