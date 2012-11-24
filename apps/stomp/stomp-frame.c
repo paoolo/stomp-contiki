@@ -1,9 +1,11 @@
-#include "simple-stomp.h"
+#include "stomp-global.h"
+
 #include "stomp-frame.h"
 #include "stomp-tools.h"
 
+#include "uip-debug.h"
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 void
@@ -57,7 +59,7 @@ stomp_frame_new_frame(const char *command, struct stomp_header *headers,
 }
 
 struct stomp_frame*
-stomp_frame_import(const char *stream, struct stomp_frame *frame) {
+stomp_frame_import(const char *stream, int length, struct stomp_frame *frame) {
     int offset = 0;
     struct stomp_header *header = NULL;
 
@@ -68,13 +70,13 @@ stomp_frame_import(const char *stream, struct stomp_frame *frame) {
         frame = NEW(struct stomp_frame);
     }
 
-    offset = stomp_tools_substr_to(stream, frame->command, offset, STOMP_NEW_LINE);
+    offset = stomp_tools_substr_to(stream, frame->command, offset, STOMP_NEW_LINE, length);
 
     while (stream + offset != NULL && *(stream + offset) != STOMP_NULL && *(stream + offset) != STOMP_NEW_LINE) {
         header = NEW(struct stomp_header);
 
-        offset = stomp_tools_substr_to(stream, header->name, offset, STOMP_COLON);
-        offset = stomp_tools_substr_to(stream, header->value, offset, STOMP_NEW_LINE);
+        offset = stomp_tools_substr_to(stream, header->name, offset, STOMP_COLON, length);
+        offset = stomp_tools_substr_to(stream, header->value, offset, STOMP_NEW_LINE, length);
 
         header->next = frame->headers;
         frame->headers = header;
@@ -82,7 +84,7 @@ stomp_frame_import(const char *stream, struct stomp_frame *frame) {
 
     offset = offset + 1;
 
-    offset = stomp_tools_substr_to(stream, frame->payload, offset, STOMP_NULL);
+    offset = stomp_tools_substr_to(stream, frame->payload, offset, STOMP_NULL, length);
 
     return frame;
 }
@@ -144,7 +146,7 @@ stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
     offset = offset + 1;
 
     if (offset != size) {
-        printf("Stomp frame offset not equals with size: %d != %d\n", offset, size);
+        PRINTA("Stomp frame offset not equals with size: %d != %d\n", offset, size);
     }
 }
 

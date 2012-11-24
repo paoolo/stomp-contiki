@@ -1,6 +1,4 @@
 #include "contiki.h"
-#include "contiki-lib.h"
-#include "contiki-net.h"
 
 #ifndef STOMP_SENSOR_H
 #define	STOMP_SENSOR_H
@@ -19,10 +17,10 @@
 #define STOMP_SENSOR_PERIODIC_NONE      0b000000
 
 struct stomp_sensor {
-    int8_t update;
-    int8_t periodic;
-    int16_t last;
-    int16_t value;
+    int update;
+    int periodic;
+    int last;
+    int value;
 };
 
 #define STOMP_SENSOR(PROCESS_NAME, FREQ, NEXT_VALUE, INIT, MIN, MAX, DELTA, STEP) \
@@ -43,22 +41,22 @@ PROCESS_THREAD(PROCESS_NAME, ev, data) { \
     PROCESS_END(); \
 }
 
-extern struct stomp_sensor * const stomp_sensor_processes[];
+extern struct stomp_sensor * stomp_sensor_processes[];
 
 #if ! CC_NO_VA_ARGS
 #define STOMP_SENSOR_PROCESSES(...) \
-struct stomp_sensor * const stomp_sensor_processes[] = {__VA_ARGS__, NULL}
+struct stomp_sensor * stomp_sensor_processes[] = {__VA_ARGS__, NULL}
 #else
 #error "C compiler must support __VA_ARGS__ macro"
 #endif
 
 PROCESS_NAME(stomp_sensors);
 
-int16_t stomp_sensor_const(int16_t min, int16_t max, int16_t delta, int16_t step, int16_t value);
+int stomp_sensor_const(int min, int max, int delta, int step, int value);
 
-int16_t stomp_sensor_random(int16_t min, int16_t max, int16_t delta, int16_t step, int16_t value);
+int stomp_sensor_random(int min, int max, int delta, int step, int value);
 
-int16_t stomp_sensor_random_delta(int16_t min, int16_t max, int16_t delta, int16_t step, int16_t value);
+int stomp_sensor_random_delta(int min, int max, int delta, int step, int value);
 
 #endif	/* STOMP_SENSOR_H */
 

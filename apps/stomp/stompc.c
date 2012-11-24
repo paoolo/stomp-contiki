@@ -1,45 +1,19 @@
+#include "stomp-global.h"
+
 #include "stompc.h"
-
-#include "contiki.h"
-#include "contiki-net.h"
-
-#include "stomp.h"
-#include "stomp-tools.h"
-#include "stomp-frame.h"
 #include "stomp-network.h"
-#include "stomp-strings.h"
+#include "stomp-frame.h"
+#include "stomp-tools.h"
+
+#include "uip-debug.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 struct stompc_state c_state;
 
-PROCESS(stompc_process, "STOMPc process");
-AUTOSTART_PROCESSES(&stompc_process);
-
-PROCESS_THREAD(stompc_process, ev, data) {
-    PROCESS_BEGIN();
-#ifdef STOMPC_TRACE
-    printf("stompc_process: start.\n");
-#endif
-
-    while (1) {
-        PROCESS_WAIT_EVENT();
-#ifdef STOMPC_TRACE
-        printf("stompc_process: any event.\n");
-#endif
-        stompc_frame();
-    }
-#ifdef STOMPC_TRACE
-    printf("stompc_process: stop.\n");
-#endif
-    PROCESS_END();
-}
-
 void
 stompc_frame() {
-    uint16_t len;
+    int len;
     char *buf;
 
     if (c_state.frame != NULL) {
@@ -56,71 +30,63 @@ stompc_frame() {
 
 /* Callbacks */
 
+#ifndef WITH_UDP
+
 void
 stomp_network_connected() {
 #ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_connected: start.\n");
-    printf("stomp_network_connected: connected.\n");
+    PRINTA("stomp_network_connected: connected.\n");
 #endif    
     stompc_connected();
-#ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_connected: stop.\n");
-#endif
 }
+#endif
+
+#ifndef WITH_UDP
 
 void
 stomp_network_sent() {
 #ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_sent: start.\n");
-    printf("stomp_network_sent: frame has been sent.\n");
+    PRINTA("stomp_network_sent: frame has been sent.\n");
 #endif    
     stompc_sent();
-#ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_sent: stop.\n");
-#endif
 }
+#endif
 
 void
-stomp_network_received(char *buf, uint16_t len) {
+stomp_network_received(char *buf, int len) {
 #ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_received: start.\n");
+    PRINTA("stomp_network_received: frame has been received.\n");
 #endif    
     stompc_received(buf, len);
-#ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_received: stop.\n");
-#endif
 }
+
+#ifndef WITH_UDP
 
 void
 stomp_network_closed() {
 #ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_closed: start.\n");
-    printf("stomp_network_closed: closed.\n");
+    PRINTA("stomp_network_closed: closed.\n");
 #endif
     stompc_closed();
-#ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_closed: stop.\n");
-#endif
 }
+#endif
+
+#ifndef WITH_UDP
 
 void
 stomp_network_aborted() {
 #ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_aborted: start.\n");
-    printf("stomp_network_aborted: aborted.\n");
-#endif
-#ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_aborted: stop.\n");
+    PRINTA("stomp_network_aborted: aborted.\n");
 #endif
 }
+#endif
+
+#ifndef WITH_UDP
 
 void
 stomp_network_timedout() {
 #ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_timedout: start.\n");
-    printf("stomp_network_timedout: timedout.\n");
-#endif
-#ifdef STOMP_NETWORK_TRACE
-    printf("stomp_network_timedout: stop.\n");
+    PRINTA("stomp_network_timedout: timedout.\n");
 #endif
 }
+#endif

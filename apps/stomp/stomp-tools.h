@@ -1,5 +1,6 @@
-#ifndef TOOLS_H_
-#define TOOLS_H_
+
+#ifndef STOMP_TOOLS_H
+#define STOMP_TOOLS_H
 
 #include <stdlib.h>
 
@@ -7,25 +8,13 @@
 void*
 stomp_tools_new(int size);
 
-/* Create new string and copy */
-char*
-stomp_tools_strcpy(const char *str);
-
-/* Create new string and copy n chars */
-char*
-stomp_tools_strncpy(const char *src, int n);
-
-/* Create new string and concat both */
-char*
-stomp_tools_strcat(const char *first, const char *second);
-
 /* Create new string and copy substr */
 void
 stomp_tools_substr(const char *src, char *dest, int offset, int length);
 
 /* Create new string and copy substr ended with delim */
 int
-stomp_tools_substr_to(const char *src, char *dest, int offset, char delim);
+stomp_tools_substr_to(const char *src, char *dest, int offset, char delim, int length);
 
 /* C Macros used to alloc and free memory */
 #define NEW(T) (T*)stomp_tools_new(sizeof(T))
@@ -33,4 +22,4 @@ stomp_tools_substr_to(const char *src, char *dest, int offset, char delim);
 
 #define DELETE(PTR) free(PTR); PTR = NULL
 
-#endif /* TOOLS_H_ */
+#endif /* STOMP_TOOLS_H */

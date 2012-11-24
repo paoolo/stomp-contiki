@@ -1,8 +1,8 @@
-#ifndef SIMPLE_STOMP_H
-#define	SIMPLE_STOMP_H
-
 #include "contiki.h"
 #include "contiki-net.h"
+
+#ifndef SIMPLE_STOMP_H
+#define	SIMPLE_STOMP_H
 
 #define SIMPLE_STOMP_FLAG_CLOSE 1
 #define SIMPLE_STOMP_FLAG_ABORT 2

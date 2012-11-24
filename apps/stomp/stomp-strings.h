@@ -1,3 +1,4 @@
+
 #ifndef STOMP_STRINGS_H
 #define	STOMP_STRINGS_H
 

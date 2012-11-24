@@ -1,5 +1,6 @@
-#ifndef FRAME_H_
-#define FRAME_H_
+
+#ifndef STOMP_FRAME_H
+#define STOMP_FRAME_H
 
 #define STOMP_NULL 0x00
 #define STOMP_COLON 0x3a
@@ -38,22 +39,13 @@ stomp_frame_add_header(const char *name, const char *value, struct stomp_header 
 struct stomp_frame*
 stomp_frame_new_frame(const char *command, struct stomp_header *headers, const char *payload);
 
-struct stomp_header*
-stomp_frame_find_header(const char *name, struct stomp_frame *frame);
-
 struct stomp_frame*
-stomp_frame_import(const char *stream, struct stomp_frame *frame);
+stomp_frame_import(const char *stream, int length, struct stomp_frame *frame);
 
 void
 stomp_frame_export(struct stomp_frame *frame, char *stream, int length);
 
-void
-stomp_frame_print(struct stomp_frame *frame);
-
-void
-stomp_frame_raw(struct stomp_frame *frame);
-
 int
 stomp_frame_length(struct stomp_frame *frame);
 
-#endif /* FRAME_H_ */
+#endif /* STOMP_FRAME_H */

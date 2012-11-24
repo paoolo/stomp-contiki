@@ -219,7 +219,7 @@ void initialize(void)
 
   /* Add easy addresses for testing */
   uip_ip6addr_t ipaddr;
-  uip_ip6addr(&ipaddr, 0xfdfd, 0, 0, 0, 0, 0, 0, addr.u8[7]);
+  uip_ip6addr(&ipaddr, 0xfe80, 0, 0, 0, 0, 0, 0, addr.u8[7]);
   uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
 #if UIP_CONF_ROUTER
   uip_ds6_prefix_add(&ipaddr,64,0,0,0,0);

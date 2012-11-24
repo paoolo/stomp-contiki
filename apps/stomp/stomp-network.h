@@ -1,10 +1,10 @@
-#ifndef NETWORK_H_
-#define NETWORK_H_
+#include "stomp-global.h"
+
+#ifndef STOMP_NETWORK_H
+#define STOMP_NETWORK_H
 
 #include "contiki.h"
 #include "contiki-net.h"
-
-#include "stomp.h"
 
 #define STOMP_FLAG_DISCONNECT 1
 #define STOMP_FLAG_ABORT 2
@@ -17,13 +17,13 @@ struct stomp_network_state {
 #endif
 
     uip_ipaddr_t *addr;
-    uint16_t port;
+    int port;
     char flags;
 
     char *buf;
-    uint16_t off;
-    uint16_t len;
-    uint16_t sentlen;
+    int off;
+    int len;
+    int sentlen;
 };
 
 extern struct stomp_network_state network_state;
@@ -34,7 +34,7 @@ extern uip_ipaddr_t stomp_network_addr;
 extern int stomp_network_port;
 
 #if UIP_CONF_IPV6 > 0
-extern uint16_t stomp_network_addr_num[];
+extern int stomp_network_addr_num[];
 #else
 extern uint8_t stomp_network_addr_num[];
 #endif
@@ -43,36 +43,50 @@ PROCESS_NAME(stomp_network_process);
 PROCESS_NAME(stomp_network_send_process);
 
 unsigned char
-stomp_network_send(char *buf, uint16_t len);
+stomp_network_send(char *buf, int len);
 
+#ifndef WITH_UDP
 unsigned char
 stomp_network_close();
+#endif
 
+#ifndef WITH_UDP
 unsigned char
 stomp_network_abort();
+#endif
 
 /* TODO protocol negotation and registering to server */
+#ifndef WITH_UDP
 void
 stomp_network_connected();
+#endif
 
 /* TODO notyfing about sent message to server */
+#ifndef WITH_UDP
 void
 stomp_network_sent();
+#endif
 
 /* TODO parsing frame and to do something with this */
 void
-stomp_network_received(char *buf, uint16_t len);
+stomp_network_received(char *buf, int len);
 
 /* TODO clean up session */
+#ifndef WITH_UDP
 void
 stomp_network_closed();
+#endif
 
 /* TODO notifing about aborted connection */
+#ifndef WITH_UDP
 void
 stomp_network_aborted();
+#endif
 
 /* TODO notifing about timedout connection */
+#ifndef WITH_UDP
 void
 stomp_network_timedout();
+#endif
 
-#endif /* NETWORK_H_ */
+#endif /* STOMP_NETWORK_H */

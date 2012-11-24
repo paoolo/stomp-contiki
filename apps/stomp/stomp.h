@@ -1,14 +1,9 @@
-#ifndef STOMP_H_
-#define STOMP_H_
+#include "stomp-global.h"
 
 #include "stomp-frame.h"
 
-#include <stdint.h>
-
-#define WITH_UDP
-#define STOMP_TRACE
-#define STOMPC_TRACE
-#define STOMP_NETWORK_TRACE
+#ifndef STOMP_H
+#define STOMP_H
 
 extern const char stomp_version_default[4];
 extern const char stomp_content_type_default[11];
@@ -37,16 +32,22 @@ stomp_abort(char *tx);
 void
 stomp_disconnect(char *receipt);
 
+#ifndef WITH_UDP
 void
 stomp_connected();
+#endif
 
+#ifndef WITH_UDP
 void
 stomp_sent();
+#endif
 
 void
 stomp_received(struct stomp_frame *frame);
 
+#ifndef WITH_UDP
 void
 stomp_closed();
+#endif
 
-#endif /* STOMP_H_ */
+#endif /* STOMP_H */

@@ -88,8 +88,12 @@ ping6handler(process_event_t ev, process_data_t data)
 #error Must define NODE as the node id to ping
 #endif
     // Setup destination address.
-    addr[0] = 0xFDFD;
-    addr[7] = NODE;
+    // aaaa::280:e102:0:4874
+    addr[0] = 0xfe80;
+    addr[4] = 0x0280;
+    addr[5] = 0xe102;
+    addr[6] = 0x0000;
+    addr[7] = 0x4874;
     //addr[4] = 0x0011;
     //addr[5] = 0x22ff;
     //addr[6] = 0xfe33;
