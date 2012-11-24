@@ -30,7 +30,7 @@ __send() {
     }
 #endif
 #ifdef WITH_UDP
-    uip_udp_packet_sendto(state.conn, state.buf + off, state.len, state.addr, UIP_HTONS(state.port));
+    uip_udp_packet_sendto(state.conn, state.buf + state.off, state.len, state.addr, UIP_HTONS(state.port));
     __sent();
 #else
     uip_send(state.buf + state.off, state.sentlen);
@@ -52,7 +52,7 @@ __acked() {
 #endif
 
 int
-addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
+addr[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
 
 uip_ipaddr_t
 ipaddr;
@@ -63,6 +63,10 @@ port = 61613;
 PROCESS(ultra_simple_stomp_network_process, "ultra-simple-STOMP network process");
 
 PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
+#ifdef WITH_UDP
+    static struct etimer et;
+#endif
+
     PROCESS_BEGIN();
 
 #if UIP_CONF_IPV6 > 0
@@ -72,10 +76,25 @@ PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
 #endif
 
     stomp_net_connect(&ipaddr, port);
+#ifdef WITH_UDP
+    etimer_set(&et, CLOCK_CONF_SECOND * 15);
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
+    stomp_net_connected();
+#endif
 
     while (1) {
         PROCESS_WAIT_EVENT();
-#ifndef WITH_UDP
+#ifdef WITH_UDP
+        if (ev == tcpip_event) {
+            if (uip_newdata()) {
+                stomp_net_received((char*) uip_appdata, uip_datalen());
+            }
+        } else {
+            if (state.buf != NULL) {
+                __send();
+            }
+        }
+#else
         if (uip_connected()) {
             state.flags = 0;
             stomp_net_connected();
@@ -102,19 +121,13 @@ PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
         if (uip_acked()) {
             __acked();
         }
-#endif
         if (uip_newdata()) {
             stomp_net_received((char*) uip_appdata, uip_datalen());
         }
-#ifndef WITH_UDP
         if (uip_rexmit() || uip_newdata() || uip_acked()) {
             __send();
 
         } else if (uip_poll()) {
-            __send();
-        }
-#else
-        if (state.buf != NULL) {
             __send();
         }
 #endif
@@ -139,6 +152,7 @@ stomp_net_connect(uip_ipaddr_t *ipaddr, int port) {
     state.port = port;
     state.flags = 0;
     state.len = 0;
+    state.buf = NULL;
     state.off = 0;
     state.sentlen = 0;
 }
@@ -175,4 +189,7 @@ void
 stomp_net_send(char *buf, int len) {
     state.buf = buf;
     state.len = len;
+#ifdef WITH_UDP
+    process_post(&ultra_simple_stomp_network_process, PROCESS_EVENT_CONTINUE, NULL);
+#endif
 }

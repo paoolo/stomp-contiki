@@ -9,6 +9,8 @@
 
 #define ULTRA_SIMPLE_STOMP_BUF_SIZE 256
 
+#define WITH_UDP
+
 struct ultra_simple_stomp {
 #ifdef WITH_UDP
     struct uip_udp_conn *conn;
@@ -33,10 +35,10 @@ PROCESS_NAME(ultra_simple_stomp_network_process);
 void
 stomp_net_connect(uip_ipaddr_t *ipaddr, int port);
 
-#ifndef WITH_UDP
 void
 stomp_net_connected();
 
+#ifndef WITH_UDP
 void
 stomp_net_timedout();
 

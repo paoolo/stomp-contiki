@@ -16,14 +16,16 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
 
     PROCESS_WAIT_EVENT();
     STOMP_CONNECT("apollo", "admin", "password");
-    STOMP_SUBSCRIBE("id-203284818775978", "/queue/203284818775978", "auto");
-    STOMP_BEGIN("tx");
-    STOMP_SEND("/queue/all", "text/plain", "5", NULL, NULL, "HELLO");
-    STOMP_ABORT("tx");
-    STOMP_BEGIN("tx");
-    STOMP_SEND("/queue/all", "text/plain", "5", NULL, NULL, "HELLO");
-    STOMP_COMMIT("tx");
-    STOMP_UNSUBSCRIBE("id-203284818775978");
+    while (1) {
+        STOMP_SUBSCRIBE("id-203284818775978", "/queue/203284818775978", "auto");
+        STOMP_BEGIN("tx");
+        STOMP_SEND("/queue/all", "text/plain", "5", NULL, NULL, "HELLO");
+        STOMP_ABORT("tx");
+        STOMP_BEGIN("tx");
+        STOMP_SEND("/queue/all", "text/plain", "5", NULL, NULL, "HELLO");
+        STOMP_COMMIT("tx");
+        STOMP_UNSUBSCRIBE("id-203284818775978");
+    }
     STOMP_DISCONNECT("0");
 
     PRINTA("Stop.\n");
