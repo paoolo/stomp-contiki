@@ -117,47 +117,144 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
 }
 
 void
-sensor_set_all(char *update, char *periodic) {
+_sensor_set_all(char *update, char *periodic) {
+    int _update = 0, _periodic = 0;
+    struct stomp_sensor **sens;
+
     PRINTA("SET_ALL;%s;%s\n", update, periodic);
-    /*
-     * TODO:
-     * - set params for specified sensor
-     * - send SET_ALL to manager, with UUID
-     */
+    if (update != NULL) {
+        if (*update == '0')
+            _update = STOMP_SENSOR_NO_UPDATE;
+        else if (*update == '1')
+            _update = STOMP_SENSOR_UPDATE_PERIODICALLY;
+        else if (*update == '2')
+            _update = STOMP_SENSOR_UPDATE_ON_CHANGE;
+        else if (*update == '3')
+            _update = STOMP_SENSOR_UPDATE_PERIODICALLY_ON_CHANGE;
+    }
+    if (periodic != NULL) {
+        if (*periodic == '0')
+            _periodic = STOMP_SENSOR_PERIODIC_15s;
+        else if (*periodic == '1')
+            _periodic = STOMP_SENSOR_PERIODIC_30s;
+        else if (*periodic == '2')
+            _periodic = STOMP_SENSOR_PERIODIC_1m;
+        else if (*periodic == '3')
+            _periodic = STOMP_SENSOR_PERIODIC_2m;
+        else if (*periodic == '4')
+            _periodic = STOMP_SENSOR_PERIODIC_5m;
+        else if (*periodic == '5')
+            _periodic = STOMP_SENSOR_PERIODIC_10m;
+    }
+
+    sens = stomp_sensor_processes;
+    while (sens != NULL && *sens != NULL) {
+        (*sens)->update = _update;
+        (*sens)->periodic = _periodic;
+        sens++;
+    }
+
+    /* TODO: send SET_ALL to manager, with UUID */
     PRINTA("SET_ALL;" UUID "\n");
 }
 
 void
-sensor_set(char *sensor, char *update, char *periodic) {
+_sensor_set(char *sensor, char *update, char *periodic) {
+    char tmp1[64];
+    int _update = 0, _periodic = 0;
+    struct stomp_sensor **sens;
+
     PRINTA("SET;%s;%s;%s\n", sensor, update, periodic);
-    /*
-     * TODO:
-     * - set params for specified sensor
-     * - send SET to manager, with UUID and <sensor>
-     */
-    PRINTA("SET;" UUID ";%s\n", sensor);
+    if (update != NULL) {
+        if (*update == '0')
+            _update = STOMP_SENSOR_NO_UPDATE;
+        else if (*update == '1')
+            _update = STOMP_SENSOR_UPDATE_PERIODICALLY;
+        else if (*update == '2')
+            _update = STOMP_SENSOR_UPDATE_ON_CHANGE;
+        else if (*update == '3')
+            _update = STOMP_SENSOR_UPDATE_PERIODICALLY_ON_CHANGE;
+    }
+    if (periodic != NULL) {
+        if (*periodic == '0')
+            _periodic = STOMP_SENSOR_PERIODIC_15s;
+        else if (*periodic == '1')
+            _periodic = STOMP_SENSOR_PERIODIC_30s;
+        else if (*periodic == '2')
+            _periodic = STOMP_SENSOR_PERIODIC_1m;
+        else if (*periodic == '3')
+            _periodic = STOMP_SENSOR_PERIODIC_2m;
+        else if (*periodic == '4')
+            _periodic = STOMP_SENSOR_PERIODIC_5m;
+        else if (*periodic == '5')
+            _periodic = STOMP_SENSOR_PERIODIC_10m;
+    }
+
+    sens = stomp_sensor_processes;
+    while (sens != NULL && *sens != NULL) {
+        if (strcmp((*sens)->name, sensor) == 0) {
+            (*sens)->update = _update;
+            (*sens)->periodic = _periodic;
+            sprintf(tmp1, "SET;" UUID ";%s", sensor);
+            break;
+        }
+        sens++;
+    }
+
+    if (sens != NULL && *sens != NULL) {
+        /* TODO: send SET to manager, with UUID and <sensor> */
+        PRINTA("SET;" UUID ";%s\n", sensor);
+    } else {
+        PRINTA("SET: No sensor \"%s\" found. Abort.\n", sensor);
+    }
 }
 
 void
-sensor_get(char *sensor) {
+_sensor_get(char *sensor) {
+    char tmp1[64];
+    struct stomp_sensor **sens;
+
     PRINTA("GET;%s\n", sensor);
-    /*
-     * TODO:
-     * - get params for specified sensor
-     * - send GET with UUID, <sensor>, <update>, <periodic>
-     */
-    PRINTA("GET;" UUID ";%s;<update>;<periodic>\n", sensor);
+
+    sens = stomp_sensor_processes;
+    while (sens != NULL && *sens != NULL) {
+        if (strcmp((*sens)->name, sensor) == 0) {
+            sprintf(tmp1, "GET;" UUID ";%s;%d;%d", sensor, (*sens)->update, (*sens)->periodic);
+            break;
+        }
+        sens++;
+    }
+
+    if (sens != NULL && *sens != NULL) {
+        /* TODO: send GET with UUID, <sensor>, <update>, <periodic> */
+        PRINTA("GET;" UUID ";%s;%d,%d\n", sensor, (*sens)->update, (*sens)->periodic);
+    } else {
+        PRINTA("GET: No sensor \"%s\" found. Abort.\n", sensor);
+    }
 }
 
 void
-sensor_update(char *sensor) {
+_sensor_update(char *sensor) {
+    char tmp1[64];
+    struct stomp_sensor **sens;
+
     PRINTA("UPDATE;%s\n", sensor);
-    /*
-     * TODO:
-     * - get value for specified sensor
-     * - send UPDATE with UUID, <sensor>, <value>
-     */
-    PRINTA("UPDATE;" UUID ";%s;<value>", sensor);
+
+    sens = stomp_sensor_processes;
+    while (sens != NULL && *sens != NULL) {
+        if (strcmp((*sens)->name, sensor) == 0) {
+            sprintf(tmp1, "UPDATE;" UUID ";%s;%d", sensor, (*sens)->value);
+            break;
+        }
+        sens++;
+    }
+
+    if (sens != NULL && *sens != NULL) {
+        /* TODO: send UPDATE with UUID, <sensor>, <value> */
+        PRINTA("UPDATE;" UUID ";%s;%d", sensor, (*sens)->value);
+    } else {
+        PRINTA("UPDATE: No sensor \"%s\" found. Abort.\n", sensor);
+    }
 }
 
 void
@@ -173,19 +270,19 @@ stomp_received(char *buf, int len) {
 #define SEMICOLON 0x3b
 
 #define SET_ALL_LEN 7
-const char _set_all[SET_ALL_LEN + 1] =
+const char sensor_cmd_set_all[SET_ALL_LEN + 1] =
         /* "SET_ALL" */{0x53, 0x45, 0x54, 0x5f, 0x41, 0x4c, 0x4c,};
 
 #define SET_LEN 3
-const char _set[SET_LEN + 1] =
+const char sensor_cmd_set[SET_LEN + 1] =
         /* "SET" */{0x53, 0x45, 0x54,};
 
 #define GET_LEN 3
-const char _get[GET_LEN + 1] =
+const char sensor_cmd_get[GET_LEN + 1] =
         /* "GET" */{0x47, 0x45, 0x54,};
 
 #define UPDATE_LEN 6
-const char _update[UPDATE_LEN + 1] =
+const char sensor_cmd_update[UPDATE_LEN + 1] =
         /* "UPDATE" */{0x55, 0x50, 0x44, 0x41, 0x54, 0x45,};
 
 void
@@ -196,8 +293,8 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
     PRINTA("MESSAGE: {destination=\"%s\", message_id=\"%s\", subscription=\"%s\", content_type=\"%s\", content_length=\"%s\", message=\"%s\"}.\n", destination, message_id, subscription, content_type, content_length, message);
 
     if (message != NULL) {
-        if (*message == _set[0]) {
-            while (message != NULL && *message != SEMICOLON && *message != _set_all[3])
+        if (*message == sensor_cmd_set[0]) {
+            while (message != NULL && *message != SEMICOLON && *message != sensor_cmd_set_all[3])
                 message += 1;
             if (message == NULL)
                 return;
@@ -231,12 +328,12 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 memcpy(periodic, message, off);
                 message += off + 1;
 
-                sensor_set(sensor, update, periodic);
+                _sensor_set(sensor, update, periodic);
                 DELETE(sensor);
                 DELETE(update);
                 DELETE(periodic);
 
-            } else if (*message == _set_all[3]) {
+            } else if (*message == sensor_cmd_set_all[3]) {
                 while (message != NULL && *message != SEMICOLON)
                     message += 1;
                 if (message == NULL)
@@ -261,12 +358,12 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 memcpy(periodic, message, off);
                 message += off + 1;
 
-                sensor_set_all(update, periodic);
+                _sensor_set_all(update, periodic);
                 DELETE(update);
                 DELETE(periodic);
 
             }
-        } else if (*message == _get[0]) {
+        } else if (*message == sensor_cmd_get[0]) {
             while (message != NULL && *message != SEMICOLON)
                 message += 1;
             if (message == NULL)
@@ -282,10 +379,10 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
             memcpy(sensor, message, off);
             message += off + 1;
 
-            sensor_get(sensor);
+            _sensor_get(sensor);
             DELETE(sensor);
 
-        } else if (*message == _update[0]) {
+        } else if (*message == sensor_cmd_update[0]) {
             while (message != NULL && *message != SEMICOLON)
                 message += 1;
             if (message == NULL)
@@ -301,7 +398,7 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
             memcpy(sensor, message, off);
             message += off + 1;
 
-            sensor_update(sensor);
+            _sensor_update(sensor);
             DELETE(sensor);
 
         } else {
