@@ -59,7 +59,7 @@ void
 stomp_net_send(struct process *proc, char *buf, int len);
 
 void
-stomp_net_sent();
+stomp_net_sent(char *buf, int len);
 
 void
 stomp_net_received(char *buf, int len);

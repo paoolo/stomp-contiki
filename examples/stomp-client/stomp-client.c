@@ -38,7 +38,7 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
 
     STOMP_CONNECT("apollo", "admin", "password");
     STOMP_SUBSCRIBE("income", "/queue/" UUID, "auto");
-    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, "HELLO;" UUID "temp,hum,pres,");
+    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, "HELLO;" UUID ";temp,hum,pres,");
 
     sens = stomp_sensor_processes;
     while (sens != NULL && *sens != NULL) {
@@ -117,8 +117,57 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
 }
 
 void
-stomp_sent() {
+sensor_set_all(char *update, char *periodic) {
+    PRINTA("SET_ALL;%s;%s\n", update, periodic);
+    /*
+     * TODO:
+     * - set params for specified sensor
+     * - send SET_ALL to manager, with UUID
+     */
+    PRINTA("SET_ALL;" UUID "\n");
+}
+
+void
+sensor_set(char *sensor, char *update, char *periodic) {
+    PRINTA("SET;%s;%s;%s\n", sensor, update, periodic);
+    /*
+     * TODO:
+     * - set params for specified sensor
+     * - send SET to manager, with UUID and <sensor>
+     */
+    PRINTA("SET;" UUID ";%s\n", sensor);
+}
+
+void
+sensor_get(char *sensor) {
+    PRINTA("GET;%s\n", sensor);
+    /*
+     * TODO:
+     * - get params for specified sensor
+     * - send GET with UUID, <sensor>, <update>, <periodic>
+     */
+    PRINTA("GET;" UUID ";%s;<update>;<periodic>\n", sensor);
+}
+
+void
+sensor_update(char *sensor) {
+    PRINTA("UPDATE;%s\n", sensor);
+    /*
+     * TODO:
+     * - get value for specified sensor
+     * - send UPDATE with UUID, <sensor>, <value>
+     */
+    PRINTA("UPDATE;" UUID ";%s;<value>", sensor);
+}
+
+void
+stomp_sent(char *buf, int len) {
     process_post(&stomp_client_process, PROCESS_EVENT_CONTINUE, NULL);
+}
+
+void
+stomp_received(char *buf, int len) {
+    PRINTA("Received unknown frame.\n");
 }
 
 #define SEMICOLON 0x3b
@@ -182,8 +231,7 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 memcpy(periodic, message, off);
                 message += off + 1;
 
-                /* TODO set on specified sensor */
-                PRINTA("SET;%s;%s;%s", sensor, update, periodic);
+                sensor_set(sensor, update, periodic);
                 DELETE(sensor);
                 DELETE(update);
                 DELETE(periodic);
@@ -213,8 +261,7 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 memcpy(periodic, message, off);
                 message += off + 1;
 
-                /* TODO set on all sensors */
-                PRINTA("SET_ALL;%s;%s", update, periodic);
+                sensor_set_all(update, periodic);
                 DELETE(update);
                 DELETE(periodic);
 
@@ -235,8 +282,7 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
             memcpy(sensor, message, off);
             message += off + 1;
 
-            /* TODO get settings on specified sensor */
-            PRINTA("GET;%s", sensor);
+            sensor_get(sensor);
             DELETE(sensor);
 
         } else if (*message == _update[0]) {
@@ -254,12 +300,12 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
             sensor = NEW_ARRAY(char, off + 1);
             memcpy(sensor, message, off);
             message += off + 1;
-            /* TODO update value from sensor */
-            PRINTA("UPDATE;%s", sensor);
+
+            sensor_update(sensor);
             DELETE(sensor);
 
         } else {
-            PRINTA("Unrecognized operation.\n");
+            PRINTA("Received unknown message.\n");
         }
     }
 }
@@ -277,11 +323,6 @@ stomp_receipt(char* receipt_id) {
 void
 stomp_connected(char* version, char* server, char* host_id, char* session, char* heart_beat, char* user_id) {
     PRINTA("CONNECTED: {version=\"%s\", server=\"%s\", host_id=\"%s\", session=\"%s\", heart_beat=\"%s\", user_id=\"%s\"}.\n", version, server, host_id, session, heart_beat, user_id);
-}
-
-void
-stomp_received(char *buf, int len) {
-    PRINTA("Unknown: {buf=\"%s\", len=%d}.\n", buf, len);
 }
 
 void

@@ -24,20 +24,20 @@ stomp_connect(struct process *proc, char *host, char* login, char* pass) {
 
     total_len = STOMP_COMMAND_CONNECT_LEN + 1;
     if (host == NULL) {
-        PRINTA("No host. Abort CONNECT.\n");
+        PRINTA("CONNECT: No host. Abort.\n");
         return;
     } else {
         host_len = strlen(host);
         total_len += STOMP_HEADER_HOST_LEN + 1 + host_len + 1;
     }
     if (login == NULL) {
-        PRINTA("No login.\n");
+        PRINTA("CONNECT: No login.\n");
     } else {
         login_len = strlen(login);
         total_len += STOMP_HEADER_LOGIN_LEN + 1 + login_len + 1;
     }
     if (pass == NULL) {
-        PRINTA("No pass.\n");
+        PRINTA("CONNECT: No pass.\n");
     } else {
         pass_len = strlen(pass);
         total_len += STOMP_HEADER_PASSCODE_LEN + 1 + pass_len + 1;
@@ -95,9 +95,9 @@ stomp_connect(struct process *proc, char *host, char* login, char* pass) {
     off += 1;
 
     if (off != total_len) {
-        PRINTA("CONNECT: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("CONNECT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("CONNECT: {host=\"%s\", login=\"%s\", pass=\"%s\"}.\n", host, login, pass);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -108,21 +108,21 @@ stomp_subscribe(struct process *proc, char *id, char *destination, char *ack) {
 
     total_len = STOMP_COMMAND_SUBSCRIBE_LEN + 1;
     if (id == NULL) {
-        PRINTA("No id. Abort SUBSCRIBE.\n");
+        PRINTA("SUBSCRIBE: No id. Abort.\n");
         return;
     } else {
         id_len = strlen(id);
         total_len += STOMP_HEADER_ID_LEN + 1 + id_len + 1;
     }
     if (destination == NULL) {
-        PRINTA("No destination. Abort SUBSCRIBE.\n");
+        PRINTA("SUBSCRIBE: No destination. Abort.\n");
         return;
     } else {
         destination_len = strlen(destination);
         total_len += STOMP_HEADER_DESTINATION_LEN + 1 + destination_len + 1;
     }
     if (ack == NULL) {
-        PRINTA("No ack. Set to 'auto'.\n");
+        PRINTA("SUBSCRIBE: No ack. Set to 'auto'.\n");
         ack = (char*) stomp_header_auto;
         ack_len = 4;
         total_len += STOMP_HEADER_ACK_LEN + 1 + ack_len + 1;
@@ -176,9 +176,9 @@ stomp_subscribe(struct process *proc, char *id, char *destination, char *ack) {
     off += 1;
 
     if (off != total_len) {
-        PRINTA("SUBSCRIBE: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("SUBSCRIBE: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("SUBSCRIBE: {id=\"%s\", destination=\"%s\", ack=\"%s\"}\n", id, destination, ack);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -189,7 +189,7 @@ stomp_unsubscribe(struct process *proc, char *id) {
 
     total_len = STOMP_COMMAND_UNSUBSCRIBE_LEN + 1;
     if (id == NULL) {
-        PRINTA("No id. Abort UNSUBSCRIBE.\n");
+        PRINTA("UNSUBSCRIBE: No id. Abort.\n");
         return;
     } else {
         id_len = strlen(id);
@@ -219,9 +219,9 @@ stomp_unsubscribe(struct process *proc, char *id) {
     off += 1;
 
     if (off != total_len) {
-        PRINTA("UNSUBSCRIBE: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("UNSUBSCRIBE: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("UNSUBSCRIBE: {id=\"%s\"}.\n", id);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -232,14 +232,14 @@ stomp_send(struct process *proc, char *destination, char *type, char *length, ch
 
     total_len = STOMP_COMMAND_SEND_LEN + 1;
     if (destination == NULL) {
-        PRINTA("No destination. Abort SEND.\n");
+        PRINTA("SEND: No destination. Abort.\n");
         return;
     } else {
         destination_len = strlen(destination);
         total_len += STOMP_HEADER_DESTINATION_LEN + 1 + destination_len + 1;
     }
     if (type == NULL) {
-        PRINTA("No content type. Set to default 'plain/text'.\n");
+        PRINTA("SEND: No content type. Set to default 'plain/text'.\n");
         type = (char*) stomp_content_type_default;
         type_len = 10;
         total_len += STOMP_HEADER_CONTENT_TYPE_LEN + 1 + type_len + 1;
@@ -249,25 +249,25 @@ stomp_send(struct process *proc, char *destination, char *type, char *length, ch
     }
 
     if (length == NULL) {
-        PRINTA("No length.\n");
+        PRINTA("SEND: No length.\n");
     } else {
         length_len = strlen(length);
         total_len += STOMP_HEADER_CONTENT_LENGTH_LEN + 1 + length_len + 1;
     }
     if (receipt == NULL) {
-        PRINTA("No receipt.\n");
+        PRINTA("SEND: No receipt.\n");
     } else {
         receipt_len = strlen(receipt);
         total_len += STOMP_HEADER_RECEIPT_LEN + 1 + receipt_len + 1;
     }
     if (tx == NULL) {
-        PRINTA("No tx.\n");
+        PRINTA("SEND: No tx.\n");
     } else {
         tx_len = strlen(tx);
         total_len += STOMP_HEADER_TRANSACTION_LEN + 1 + tx_len + 1;
     }
     if (message == NULL) {
-        PRINTA("No message. Abort SEND.\n");
+        PRINTA("SEND: No message. Abort.\n");
         return;
     } else {
         message_len = strlen(message);
@@ -346,9 +346,9 @@ stomp_send(struct process *proc, char *destination, char *type, char *length, ch
     }
 
     if (off != total_len) {
-        PRINTA("SEND: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("SEND: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("SEND: {destination=\"%s\", type=\"%s\", length=\"%s\", receipt=\"%s\", tx=\"%s\", message=\"%s\"}\n", destination, type, length, receipt, tx, message);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -359,21 +359,21 @@ stomp_ack(struct process *proc, char *subscription, char *message_id, char *tx) 
 
     total_len = STOMP_COMMAND_ACK_LEN + 1;
     if (subscription == NULL) {
-        PRINTA("No subscription. Abort ACK.\n");
+        PRINTA("ACK: No subscription. Abort.\n");
         return;
     } else {
         subscription_len = strlen(subscription);
         total_len += STOMP_HEADER_SUBSCRIPTION_LEN + 1 + subscription_len + 1;
     }
     if (message_id == NULL) {
-        PRINTA("No message-id. Abort ACK.\n");
+        PRINTA("ACK: No message-id. Abort.\n");
         return;
     } else {
         message_id_len = strlen(message_id);
         total_len += STOMP_HEADER_MESSAGE_ID_LEN + 1 + message_id_len + 1;
     }
     if (tx == NULL) {
-        PRINTA("No transaction. Abort ACK.\n");
+        PRINTA("ACK: No transaction. Abort.\n");
         return;
     } else {
         tx_len = strlen(tx);
@@ -423,9 +423,9 @@ stomp_ack(struct process *proc, char *subscription, char *message_id, char *tx) 
     off += 1;
 
     if (off != total_len) {
-        PRINTA("ACK: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("ACK: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("ACK: {subscription=\"%s\", message-id=\"%s\", tx=\"%s\"}.\n", subscription, message_id, tx);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -436,21 +436,21 @@ stomp_nack(struct process *proc, char *subscription, char *message_id, char *tx)
 
     total_len = STOMP_COMMAND_NACK_LEN + 1;
     if (subscription == NULL) {
-        PRINTA("No subscription. Abort ACK.\n");
+        PRINTA("NACK: No subscription. Abort.\n");
         return;
     } else {
         subscription_len = strlen(subscription);
         total_len += STOMP_HEADER_SUBSCRIPTION_LEN + 1 + subscription_len + 1;
     }
     if (message_id == NULL) {
-        PRINTA("No message-id. Abort ACK.\n");
+        PRINTA("NACK: No message-id. Abort.\n");
         return;
     } else {
         message_id_len = strlen(message_id);
         total_len += STOMP_HEADER_MESSAGE_ID_LEN + 1 + message_id_len + 1;
     }
     if (tx == NULL) {
-        PRINTA("No transaction. Abort ACK.\n");
+        PRINTA("NACK: No transaction. Abort.\n");
         return;
     } else {
         tx_len = strlen(tx);
@@ -500,9 +500,9 @@ stomp_nack(struct process *proc, char *subscription, char *message_id, char *tx)
     off += 1;
 
     if (off != total_len) {
-        PRINTA("ACK: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("NACK: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("NACK: {subscription=\"%s\", message-id=\"%s\", tx=\"%s\"}\n", subscription, message_id, tx);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -513,7 +513,7 @@ stomp_begin(struct process *proc, char *tx) {
 
     total_len = STOMP_COMMAND_BEGIN_LEN + 1;
     if (tx == NULL) {
-        PRINTA("No tx. Abort BEGIN.\n");
+        PRINTA("BEGIN: No tx. Abort.\n");
         return;
     } else {
         tx_len = strlen(tx);
@@ -543,9 +543,9 @@ stomp_begin(struct process *proc, char *tx) {
     off += 1;
 
     if (off != total_len) {
-        PRINTA("BEGIN: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("BEGIN: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("BEGIN: {tx=\"%s\"}\n", tx);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -556,7 +556,7 @@ stomp_commit(struct process *proc, char *tx) {
 
     total_len = STOMP_COMMAND_COMMIT_LEN + 1;
     if (tx == NULL) {
-        PRINTA("No tx. Abort ABORT.\n");
+        PRINTA("COMMIT: No tx. Abort.\n");
         return;
     } else {
         tx_len = strlen(tx);
@@ -586,9 +586,9 @@ stomp_commit(struct process *proc, char *tx) {
     off += 1;
 
     if (off != total_len) {
-        PRINTA("BEGIN: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("COMMIT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("COMMIT: {tx=\"%s\"}.\n", tx);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -599,7 +599,7 @@ stomp_abort(struct process *proc, char *tx) {
 
     total_len = STOMP_COMMAND_ABORT_LEN + 1;
     if (tx == NULL) {
-        PRINTA("No tx. Abort ABORT.\n");
+        PRINTA("ABORT: No tx. Abort.\n");
         return;
     } else {
         tx_len = strlen(tx);
@@ -629,9 +629,9 @@ stomp_abort(struct process *proc, char *tx) {
     off += 1;
 
     if (off != total_len) {
-        PRINTA("ABORT: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("ABORT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("ABORT: {tx=\"%s\"}.\n", tx);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
@@ -642,7 +642,7 @@ stomp_disconnect(struct process *proc, char *receipt) {
 
     total_len = STOMP_COMMAND_DISCONNECT_LEN + 1;
     if (receipt == NULL) {
-        PRINTA("No receipt. Abort DISCONNECT.\n");
+        PRINTA("DISCONNECT: No receipt. Abort.\n");
         return;
     } else {
         receipt_len = strlen(receipt);
@@ -672,16 +672,16 @@ stomp_disconnect(struct process *proc, char *receipt) {
     off += 1;
 
     if (off != total_len) {
-        PRINTA("DISCONNECT: off(%d) != total_len(%d).\n", off, total_len);
+        PRINTA("DISCONNECT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("\n^%s@\n", buf);
+    PRINTA("DISCONNECT: {receipt=\"%s\"}\n", receipt);
     stomp_net_send(proc, buf, total_len + 1);
 }
 
 void
-stomp_net_sent() {
-    PRINTA("Sent.\n");
-    stomp_sent();
+stomp_net_sent(char *buf, int len) {
+    PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
+    stomp_sent(buf, len);
 }
 
 void

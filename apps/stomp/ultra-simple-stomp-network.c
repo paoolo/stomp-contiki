@@ -13,8 +13,8 @@ struct ultra_simple_stomp state;
 
 static void
 __sent() {
+    stomp_net_sent(state.buf, state.len);
     DELETE(state.buf);
-    stomp_net_sent();
 }
 
 static void
