@@ -81,7 +81,16 @@ void
 stomp_received(char *buf, int len);
 
 void
-stomp_connected();
+stomp_message(char *destination, char *message_id, char *subscription, char *content_type, char *content_length, char *message);
+
+void
+stomp_error(char *receipt_id, char *content_type, char *content_length, char *message);
+
+void
+stomp_receipt(char *receipt_id);
+
+void
+stomp_connected(char *version, char *server, char *host_id, char *session, char *heart_beat, char *user_id);
 
 #endif	/* ULTRA_SIMPLE_STOMP_H */
 

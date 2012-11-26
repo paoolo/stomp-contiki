@@ -153,3 +153,18 @@ const char stomp_header_type[STOMP_HEADER_TYPE_LEN + 1] =
 
 const char stomp_header_jmsxuserid[STOMP_HEADER_JMSXUSERID_LEN + 1] =
         /* "JMSXUserID" */{0x4a, 0x4d, 0x53, 0x58, 0x55, 0x73, 0x65, 0x72, 0x49, 0x44,};
+
+const char stomp_header_version[STOMP_HEADER_VERSION_LEN + 1] =
+        /* "version" */{0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e,};
+
+const char stomp_header_server[STOMP_HEADER_SERVER_LEN + 1] =
+        /* "server" */{0x73, 0x65, 0x72, 0x76, 0x65, 0x72,};
+
+const char stomp_header_host_id[STOMP_HEADER_HOST_ID_LEN + 1] =
+        /* "host-id" */{0x68, 0x6f, 0x73, 0x74, 0x2d, 0x69, 0x64,};
+
+const char stomp_header_heart_beat[STOMP_HEADER_HEART_BEAT_LEN + 1] =
+        /* "heart-beat" */{0x68, 0x65, 0x61, 0x72, 0x74, 0x2d, 0x62, 0x65, 0x61, 0x74,};
+
+const char stomp_header_user_id[STOMP_HEADER_USER_ID_LEN + 1] =
+        /* "user-id" */{0x75, 0x73, 0x65, 0x72, 0x2d, 0x69, 0x64,};

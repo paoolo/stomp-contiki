@@ -110,4 +110,15 @@ extern const char stomp_header_type[STOMP_HEADER_TYPE_LEN + 1];
 #define STOMP_HEADER_JMSXUSERID_LEN 10
 extern const char stomp_header_jmsxuserid[STOMP_HEADER_JMSXUSERID_LEN + 1];
 
+#define STOMP_HEADER_VERSION_LEN 7
+extern const char stomp_header_version[STOMP_HEADER_VERSION_LEN + 1];
+#define STOMP_HEADER_SERVER_LEN 6
+extern const char stomp_header_server[STOMP_HEADER_SERVER_LEN + 1];
+#define STOMP_HEADER_HOST_ID_LEN 7
+extern const char stomp_header_host_id[STOMP_HEADER_HOST_ID_LEN + 1];
+#define STOMP_HEADER_HEART_BEAT_LEN 10
+extern const char stomp_header_heart_beat[STOMP_HEADER_HEART_BEAT_LEN + 1];
+#define STOMP_HEADER_USER_ID_LEN 7
+extern const char stomp_header_user_id[STOMP_HEADER_USER_ID_LEN + 1];
+
 #endif	/* STOMP_STRINGS_H */

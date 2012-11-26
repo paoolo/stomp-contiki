@@ -20,6 +20,6 @@ stomp_tools_substr_to(const char *src, char *dest, int offset, char delim, int l
 #define NEW(T) (T*)stomp_tools_new(sizeof(T))
 #define NEW_ARRAY(T, LEN) (T*)stomp_tools_new(sizeof(T) * (LEN))
 
-#define DELETE(PTR) free(PTR); PTR = NULL
+#define DELETE(PTR) if (PTR != NULL) free(PTR); PTR = NULL
 
 #endif /* STOMP_TOOLS_H */
