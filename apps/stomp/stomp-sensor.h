@@ -37,7 +37,6 @@ PROCESS_THREAD(PROCESS_NAME, ev, data) { \
         PROCESS_NAME##_data.name = #PROCESS_NAME; \
         PROCESS_NAME##_data.last = PROCESS_NAME##_data.value; \
         PROCESS_NAME##_data.value = NEXT_VALUE(MIN, MAX, DELTA, STEP, PROCESS_NAME##_data.value); \
-        printf(#PROCESS_NAME "_value = %d\n", PROCESS_NAME##_data.value); \
         etimer_restart(&et); \
     } \
     PROCESS_END(); \

@@ -680,13 +680,13 @@ stomp_disconnect(struct process *proc, char *receipt) {
 
 void
 stomp_net_sent(char *buf, int len) {
-    PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
+    // PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
     stomp_sent(buf, len);
 }
 
 void
 stomp_net_received(char *buf, int len) {
-    PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
+    // PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
     int off = 0;
     char *destination = NULL, *message_id = NULL, *subscription = NULL, *content_type = NULL,
             *content_length = NULL, *message = NULL, *receipt_id = NULL, *server = NULL,

@@ -52,7 +52,8 @@ __acked() {
 #endif
 
 int
-addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
+// addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
+addr[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 4};
 
 uip_ipaddr_t
 ipaddr;

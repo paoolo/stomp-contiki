@@ -38,7 +38,7 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
 
     STOMP_CONNECT("apollo", "admin", "password");
     STOMP_SUBSCRIBE("income", "/queue/" UUID, "auto");
-    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, "HELLO;" UUID ";temp,hum,pres,");
+    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, "HELLO " UUID " temp,hum,pres,");
 
     sens = stomp_sensor_processes;
     while (sens != NULL && *sens != NULL) {
@@ -68,32 +68,32 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
             if ((*sens)->update & STOMP_SENSOR_UPDATE_PERIODICALLY) {
 
                 if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_15s) {
-                    sprintf(tmp1, "UDPATE;" UUID ";%s;%d", (*sens)->name, (*sens)->value);
+                    sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                     STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                 }
                 if (tick % 2 == 0) {
                     if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_30s) {
-                        sprintf(tmp1, "UDPATE;" UUID ";%s;%d", (*sens)->name, (*sens)->value);
+                        sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                         STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                     }
                     if (tick % 4 == 0) {
                         if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_1m) {
-                            sprintf(tmp1, "UDPATE;" UUID ";%s;%d", (*sens)->name, (*sens)->value);
+                            sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                             STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                         }
                         if (tick == 0 || tick == 8 || tick == 16 || tick == 24 || tick == 32) {
                             if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_2m) {
-                                sprintf(tmp1, "UDPATE;" UUID ";%s;%d", (*sens)->name, (*sens)->value);
+                                sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                                 STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                             }
                             if (tick == 0 || tick == 20) {
                                 if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_5m) {
-                                    sprintf(tmp1, "UDPATE;" UUID ";%s;%d", (*sens)->name, (*sens)->value);
+                                    sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                                     STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                                 }
                                 if (tick == 0) {
                                     if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_10m) {
-                                        sprintf(tmp1, "UDPATE;" UUID ";%s;%d", (*sens)->name, (*sens)->value);
+                                        sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                                         STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                                     }
                                 }
@@ -104,7 +104,7 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
             }
             if ((*sens)->update & STOMP_SENSOR_UPDATE_ON_CHANGE) {
                 if ((*sens)->last != (*sens)->value) {
-                    sprintf(tmp1, "UDPATE;" UUID ";%s;%d", (*sens)->name, (*sens)->value);
+                    sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                     STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                 }
             }
@@ -118,10 +118,11 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
 
 void
 _sensor_set_all(char *update, char *periodic) {
+    char tmp[64];
     int _update = 0, _periodic = 0;
     struct stomp_sensor **sens;
 
-    PRINTA("SET_ALL;%s;%s\n", update, periodic);
+    PRINTA("SET_ALL %s %s\n", update, periodic);
     if (update != NULL) {
         if (*update == '0')
             _update = STOMP_SENSOR_NO_UPDATE;
@@ -154,17 +155,18 @@ _sensor_set_all(char *update, char *periodic) {
         sens++;
     }
 
-    /* TODO: send SET_ALL to manager, with UUID */
-    PRINTA("SET_ALL;" UUID "\n");
+    PRINTA("SET_ALL " UUID "\n");
+    sprintf(tmp, "SET_ALL " UUID);
+    stomp_send(NULL, "/queue/manager", NULL, NULL, NULL, NULL, tmp);
 }
 
 void
 _sensor_set(char *sensor, char *update, char *periodic) {
-    char tmp1[64];
+    char tmp[64];
     int _update = 0, _periodic = 0;
     struct stomp_sensor **sens;
 
-    PRINTA("SET;%s;%s;%s\n", sensor, update, periodic);
+    PRINTA("SET %s %s %s\n", sensor, update, periodic);
     if (update != NULL) {
         if (*update == '0')
             _update = STOMP_SENSOR_NO_UPDATE;
@@ -195,15 +197,17 @@ _sensor_set(char *sensor, char *update, char *periodic) {
         if (strcmp((*sens)->name, sensor) == 0) {
             (*sens)->update = _update;
             (*sens)->periodic = _periodic;
-            sprintf(tmp1, "SET;" UUID ";%s", sensor);
+
             break;
         }
         sens++;
     }
 
     if (sens != NULL && *sens != NULL) {
-        /* TODO: send SET to manager, with UUID and <sensor> */
-        PRINTA("SET;" UUID ";%s\n", sensor);
+        PRINTA("SET " UUID " %s\n", sensor);
+        sprintf(tmp, "SET " UUID " %s", sensor);
+        stomp_send(NULL, "/queue/manager", NULL, NULL, NULL, NULL, tmp);
+
     } else {
         PRINTA("SET: No sensor \"%s\" found. Abort.\n", sensor);
     }
@@ -211,23 +215,24 @@ _sensor_set(char *sensor, char *update, char *periodic) {
 
 void
 _sensor_get(char *sensor) {
-    char tmp1[64];
+    char tmp[64];
     struct stomp_sensor **sens;
 
-    PRINTA("GET;%s\n", sensor);
+    PRINTA("GET %s\n", sensor);
 
     sens = stomp_sensor_processes;
     while (sens != NULL && *sens != NULL) {
         if (strcmp((*sens)->name, sensor) == 0) {
-            sprintf(tmp1, "GET;" UUID ";%s;%d;%d", sensor, (*sens)->update, (*sens)->periodic);
             break;
         }
         sens++;
     }
 
     if (sens != NULL && *sens != NULL) {
-        /* TODO: send GET with UUID, <sensor>, <update>, <periodic> */
-        PRINTA("GET;" UUID ";%s;%d,%d\n", sensor, (*sens)->update, (*sens)->periodic);
+        PRINTA("GET " UUID " %s %d %d\n", sensor, (*sens)->update, (*sens)->periodic);
+        sprintf(tmp, "GET " UUID " %s %d %d", sensor, (*sens)->update, (*sens)->periodic);
+        stomp_send(NULL, "/queue/manager", NULL, NULL, NULL, NULL, tmp);
+
     } else {
         PRINTA("GET: No sensor \"%s\" found. Abort.\n", sensor);
     }
@@ -235,23 +240,24 @@ _sensor_get(char *sensor) {
 
 void
 _sensor_update(char *sensor) {
-    char tmp1[64];
+    char tmp[64];
     struct stomp_sensor **sens;
 
-    PRINTA("UPDATE;%s\n", sensor);
+    PRINTA("UPDATE %s\n", sensor);
 
     sens = stomp_sensor_processes;
     while (sens != NULL && *sens != NULL) {
         if (strcmp((*sens)->name, sensor) == 0) {
-            sprintf(tmp1, "UPDATE;" UUID ";%s;%d", sensor, (*sens)->value);
             break;
         }
         sens++;
     }
 
     if (sens != NULL && *sens != NULL) {
-        /* TODO: send UPDATE with UUID, <sensor>, <value> */
-        PRINTA("UPDATE;" UUID ";%s;%d", sensor, (*sens)->value);
+        PRINTA("UPDATE " UUID " %s %d\n", sensor, (*sens)->value);
+        sprintf(tmp, "UPDATE " UUID " %s %d", sensor, (*sens)->value);
+        stomp_send(NULL, "/queue/manager", NULL, NULL, NULL, NULL, tmp);
+
     } else {
         PRINTA("UPDATE: No sensor \"%s\" found. Abort.\n", sensor);
     }
@@ -267,7 +273,7 @@ stomp_received(char *buf, int len) {
     PRINTA("Received unknown frame.\n");
 }
 
-#define SEMICOLON 0x3b
+#define SPACE 0x20
 
 #define SET_ALL_LEN 7
 const char sensor_cmd_set_all[SET_ALL_LEN + 1] =
@@ -294,15 +300,15 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
 
     if (message != NULL) {
         if (*message == sensor_cmd_set[0]) {
-            while (message != NULL && *message != SEMICOLON && *message != sensor_cmd_set_all[3])
+            while (message != NULL && *message != SPACE && *message != sensor_cmd_set_all[3])
                 message += 1;
             if (message == NULL)
                 return;
 
-            if (*message == SEMICOLON) {
+            if (*message == SPACE) {
                 message += 1;
                 off = 0;
-                while (message + off != NULL && *(message + off) != SEMICOLON)
+                while (message + off != NULL && *(message + off) != SPACE)
                     off += 1;
                 if (message + off == NULL)
                     return;
@@ -311,7 +317,7 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 message += off + 1;
 
                 off = 0;
-                while (message + off != NULL && *(message + off) != SEMICOLON)
+                while (message + off != NULL && *(message + off) != 0x00 && *(message + off) != SPACE)
                     off += 1;
                 if (message + off == NULL)
                     return;
@@ -320,7 +326,7 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 message += off + 1;
 
                 off = 0;
-                while (message + off != NULL && *(message + off) != SEMICOLON)
+                while (message + off != NULL && *(message + off) != 0x00 && *(message + off) != SPACE)
                     off += 1;
                 if (message + off == NULL)
                     return;
@@ -334,14 +340,14 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 DELETE(periodic);
 
             } else if (*message == sensor_cmd_set_all[3]) {
-                while (message != NULL && *message != SEMICOLON)
+                while (message != NULL && *message != SPACE)
                     message += 1;
                 if (message == NULL)
                     return;
                 message += 1;
 
                 off = 0;
-                while (message + off != NULL && *(message + off) != SEMICOLON)
+                while (message + off != NULL && *(message + off) != 0x00 && *(message + off) != SPACE)
                     off += 1;
                 if (message + off == NULL)
                     return;
@@ -350,7 +356,7 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
                 message += off + 1;
 
                 off = 0;
-                while (message + off != NULL && *(message + off) != SEMICOLON)
+                while (message + off != NULL && *(message + off) != 0x00 && *(message + off) != SPACE)
                     off += 1;
                 if (message + off == NULL)
                     return;
@@ -364,14 +370,14 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
 
             }
         } else if (*message == sensor_cmd_get[0]) {
-            while (message != NULL && *message != SEMICOLON)
+            while (message != NULL && *message != SPACE)
                 message += 1;
             if (message == NULL)
                 return;
             message += 1;
 
             off = 0;
-            while (message + off != NULL && *(message + off) != SEMICOLON)
+            while (message + off != NULL && *(message + off) != 0x00 && *(message + off) != SPACE)
                 off += 1;
             if (message + off == NULL)
                 return;
@@ -383,14 +389,14 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
             DELETE(sensor);
 
         } else if (*message == sensor_cmd_update[0]) {
-            while (message != NULL && *message != SEMICOLON)
+            while (message != NULL && *message != SPACE)
                 message += 1;
             if (message == NULL)
                 return;
             message += 1;
 
             off = 0;
-            while (message + off != NULL && *(message + off) != SEMICOLON)
+            while (message + off != NULL && *(message + off) != 0x00 && *(message + off) != SPACE)
                 off += 1;
             if (message + off == NULL)
                 return;
