@@ -10,7 +10,7 @@
 #include "uip-debug.h"
 #include "ultra-simple-stomp-network.h"
 
-#define UUID "sensor1"
+#define UUID "sensor"
 #define TICKS 40
 
 STOMP_SENSOR(temp, 2, stomp_sensor_random_delta, 15, -30, 40, 10, 1);
@@ -68,32 +68,32 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
             if ((*sens)->update & STOMP_SENSOR_UPDATE_PERIODICALLY) {
 
                 if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_15s) {
-                    sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                    sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                     STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                 }
                 if (tick % 2 == 0) {
                     if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_30s) {
-                        sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                        sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                         STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                     }
                     if (tick % 4 == 0) {
                         if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_1m) {
-                            sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                            sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                             STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                         }
                         if (tick == 0 || tick == 8 || tick == 16 || tick == 24 || tick == 32) {
                             if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_2m) {
-                                sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                                sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                                 STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                             }
                             if (tick == 0 || tick == 20) {
                                 if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_5m) {
-                                    sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                                    sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                                     STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                                 }
                                 if (tick == 0) {
                                     if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_10m) {
-                                        sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                                        sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                                         STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                                     }
                                 }
@@ -104,7 +104,7 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
             }
             if ((*sens)->update & STOMP_SENSOR_UPDATE_ON_CHANGE) {
                 if ((*sens)->last != (*sens)->value) {
-                    sprintf(tmp1, "UDPATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                    sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
                     STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
                 }
             }
