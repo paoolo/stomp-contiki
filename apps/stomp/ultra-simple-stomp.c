@@ -680,13 +680,13 @@ stomp_disconnect(struct process *proc, char *receipt) {
 
 void
 stomp_net_sent(char *buf, int len) {
-    // PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
+    PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
     stomp_sent(buf, len);
 }
 
 void
 stomp_net_received(char *buf, int len) {
-    // PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
+    PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
     int off = 0;
     char *destination = NULL, *message_id = NULL, *subscription = NULL, *content_type = NULL,
             *content_length = NULL, *message = NULL, *receipt_id = NULL, *server = NULL,
@@ -806,80 +806,7 @@ stomp_net_received(char *buf, int len) {
             DELETE(content_length);
             DELETE(message);
         } else if (*buf == stomp_command_error[0]) {
-            while (buf != NULL && *buf != STOMP_NEW_LINE)
-                buf += 1;
-            if (buf == NULL)
-                return;
-            buf += 1;
-            while (buf != NULL && *buf != STOMP_NEW_LINE) {
-                if (*buf == stomp_header_receipt_id[0]) {
-                    while (buf != NULL && *buf != STOMP_COLON)
-                        buf++;
-                    if (buf == NULL)
-                        return;
-                    buf += 1;
-                    off = 0;
-                    while (buf + off != NULL && *(buf + off) != STOMP_NEW_LINE)
-                        off += 1;
-                    if (buf + off == NULL)
-                        return;
-                    receipt_id = NEW_ARRAY(char, off + 1);
-                    memcpy(receipt_id, buf, off);
-                    buf += off + 1;
-                } else if (*buf == stomp_header_content_type[0]) {
-                    while (buf != NULL && *buf != stomp_header_content_type[7])
-                        buf++;
-                    if (buf == NULL)
-                        return;
-                    buf += 1;
-                    if (*buf == stomp_header_content_type[8]) {
-                        while (buf != NULL && *buf != STOMP_COLON)
-                            buf += 1;
-                        if (buf == NULL)
-                            return;
-                        buf += 1;
-                        off = 0;
-                        while (buf + off != NULL && *(buf + off) != STOMP_NEW_LINE)
-                            off += 1;
-                        if (buf + off == NULL)
-                            return;
-                        content_type = NEW_ARRAY(char, off + 1);
-                        memcpy(content_type, buf, off);
-                        buf += off + 1;
-                    } else if (*buf == stomp_header_content_length[8]) {
-                        while (buf != NULL && *buf != STOMP_COLON)
-                            buf += 1;
-                        if (buf == NULL)
-                            return;
-                        buf += 1;
-                        off = 0;
-                        while (buf + off != NULL && *(buf + off) != STOMP_NEW_LINE)
-                            off += 1;
-                        if (buf + off == NULL)
-                            return;
-                        content_length = NEW_ARRAY(char, off + 1);
-                        memcpy(content_length, buf, off);
-                        buf += off + 1;
-                    } else {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            }
-            buf += 1;
-            off = 0;
-            while (buf + off != NULL && *(buf + off) != STOMP_NULL)
-                off += 1;
-            if (buf + off == NULL)
-                return;
-            message = NEW_ARRAY(char, off + 1);
-            memcpy(message, buf, off);
-            stomp_error(receipt_id, content_type, content_length, message);
-            DELETE(receipt_id);
-            DELETE(content_type);
-            DELETE(content_length);
-            DELETE(message);
+            stomp_error(NULL, NULL, NULL, buf);
         } else if (*buf == stomp_command_receipt[0]) {
             while (buf != NULL && *buf != STOMP_NEW_LINE)
                 buf += 1;

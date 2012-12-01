@@ -10,7 +10,7 @@
 #include "uip-debug.h"
 #include "ultra-simple-stomp-network.h"
 
-#define UUID "sensor0"
+#define UUID "sensorkonrafal"
 #define TICKS 40
 
 STOMP_SENSOR(temp, 2, stomp_sensor_random_delta, 15, -30, 40, 10, 1);
@@ -21,6 +21,8 @@ STOMP_SENSOR_PROCESSES(&temp_data, &hum_data, &pres_data);
 
 PROCESS(stomp_client_process, "STOMP client");
 AUTOSTART_PROCESSES(&stomp_client_process, &ultra_simple_stomp_network_process, &temp, &hum, &pres);
+
+char connected;
 
 PROCESS_THREAD(stomp_client_process, ev, data) {
     static struct etimer et;
@@ -36,82 +38,88 @@ PROCESS_THREAD(stomp_client_process, ev, data) {
     PRINTA("Waiting for connection...\n");
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
-    STOMP_CONNECT("apollo", "admin", "password");
-    STOMP_SUBSCRIBE("income", "/queue/" UUID, "auto");
-    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, "HELLO " UUID " temp,hum,pres,");
-
-    sens = stomp_sensor_processes;
-    while (sens != NULL && *sens != NULL) {
-        sprintf(tmp1, "income%s", (*sens)->name);
-        sprintf(tmp2, "/queue/%s", (*sens)->name);
-        STOMP_SUBSCRIBE(tmp1, tmp2, "auto");
-        sens++;
-    }
-
-    temp_data.periodic = STOMP_SENSOR_PERIODIC_15s;
-    hum_data.periodic = STOMP_SENSOR_PERIODIC_30s;
-    pres_data.periodic = STOMP_SENSOR_PERIODIC_1m;
-
-    temp_data.update = STOMP_SENSOR_UPDATE_PERIODICALLY;
-    hum_data.update = STOMP_SENSOR_UPDATE_ON_CHANGE;
-    pres_data.update = STOMP_SENSOR_UPDATE_PERIODICALLY_ON_CHANGE;
-
-    tick = 0;
-    etimer_set(&et, CLOCK_CONF_SECOND * 15);
-
     while (1) {
-        PROCESS_WAIT_EVENT();
-        tick = (tick + 1) % TICKS;
-        sens = stomp_sensor_processes;
-        STOMP_BEGIN("tx");
-        while (sens != NULL && *sens != NULL) {
-            if ((*sens)->update & STOMP_SENSOR_UPDATE_PERIODICALLY) {
+        PRINTA("MAIN:%d\n", connected);
+        if (connected == 0) {
+            STOMP_CONNECT("apollo", "admin", "password");
+            STOMP_SUBSCRIBE("income", "/queue/" UUID, "auto");
+            STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, "HELLO " UUID " temp,hum,pres,");
 
-                if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_15s) {
-                    sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
-                    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
-                }
-                if (tick % 2 == 0) {
-                    if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_30s) {
+            sens = stomp_sensor_processes;
+            while (sens != NULL && *sens != NULL) {
+                sprintf(tmp1, "income%s", (*sens)->name);
+                sprintf(tmp2, "/queue/%s", (*sens)->name);
+                STOMP_SUBSCRIBE(tmp1, tmp2, "auto");
+                sens++;
+            }
+
+            temp_data.periodic = STOMP_SENSOR_PERIODIC_15s;
+            hum_data.periodic = STOMP_SENSOR_PERIODIC_15s;
+            pres_data.periodic = STOMP_SENSOR_PERIODIC_15s;
+
+            temp_data.update = STOMP_SENSOR_NO_UPDATE;
+            hum_data.update = STOMP_SENSOR_NO_UPDATE;
+            pres_data.update = STOMP_SENSOR_NO_UPDATE;
+
+            tick = 0;
+            connected = 1;
+
+            etimer_set(&et, CLOCK_CONF_SECOND * 15);
+        }
+        if (connected == 1) {
+            PROCESS_WAIT_EVENT();
+            tick = (tick + 1) % TICKS;
+            sens = stomp_sensor_processes;
+            STOMP_BEGIN("tx");
+            while (sens != NULL && *sens != NULL) {
+                if ((*sens)->update & STOMP_SENSOR_UPDATE_PERIODICALLY) {
+
+                    if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_15s) {
                         sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
-                        STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
+                        STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, "tx", tmp1);
                     }
-                    if (tick % 4 == 0) {
-                        if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_1m) {
+                    if (tick % 2 == 0) {
+                        if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_30s) {
                             sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
-                            STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
+                            STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, "tx", tmp1);
                         }
-                        if (tick == 0 || tick == 8 || tick == 16 || tick == 24 || tick == 32) {
-                            if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_2m) {
+                        if (tick % 4 == 0) {
+                            if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_1m) {
                                 sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
-                                STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
+                                STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, "tx", tmp1);
                             }
-                            if (tick == 0 || tick == 20) {
-                                if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_5m) {
+                            if (tick == 0 || tick == 8 || tick == 16 || tick == 24 || tick == 32) {
+                                if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_2m) {
                                     sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
-                                    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
+                                    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, "tx", tmp1);
                                 }
-                                if (tick == 0) {
-                                    if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_10m) {
+                                if (tick == 0 || tick == 20) {
+                                    if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_5m) {
                                         sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
-                                        STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
+                                        STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, "tx", tmp1);
+                                    }
+                                    if (tick == 0) {
+                                        if ((*sens)->periodic & STOMP_SENSOR_PERIODIC_10m) {
+                                            sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                                            STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, "tx", tmp1);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
-            if ((*sens)->update & STOMP_SENSOR_UPDATE_ON_CHANGE) {
-                if ((*sens)->last != (*sens)->value) {
-                    sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
-                    STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, NULL, tmp1);
+                if ((*sens)->update & STOMP_SENSOR_UPDATE_ON_CHANGE) {
+                    if ((*sens)->last != (*sens)->value) {
+                        sprintf(tmp1, "UPDATE " UUID " %s %d", (*sens)->name, (*sens)->value);
+                        STOMP_SEND("/queue/manager", "text/plain", NULL, NULL, "tx", tmp1);
+                    }
                 }
+                sens++;
             }
-            sens++;
+            STOMP_COMMIT("tx");
+            etimer_restart(&et);
         }
-        STOMP_COMMIT("tx");
-        etimer_restart(&et);
     }
     PROCESS_END();
 }
@@ -416,6 +424,11 @@ stomp_message(char* destination, char* message_id, char* subscription, char* con
 void
 stomp_error(char* receipt_id, char* content_type, char* content_length, char *message) {
     PRINTA("ERROR: {receipt_id=\"%s\", content_type=\"%s\", content_length=\"%s\", message=\"%s\"}.\n", receipt_id, content_type, content_length, message);
+
+    /* Try to CONNECT again. */
+    PRINTA("ERROR:%d\n", connected);
+    connected = 0;
+    PRINTA("ERROR:%d\n", connected);
 }
 
 void

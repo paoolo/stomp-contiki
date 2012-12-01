@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
 void example1_init(void) {
     uip_listen(UIP_HTONS(1234));
 }
@@ -49,7 +50,6 @@ PT_THREAD(handle_connection(struct psock *p)) {
 PROCESS(program, "Hello-uIP");
 AUTOSTART_PROCESSES(&program);
 
-/* Glowny program */
 PROCESS_THREAD(program, ev, data) {
     static struct etimer et;
 
@@ -59,7 +59,6 @@ PROCESS_THREAD(program, ev, data) {
 
     getchar();
 
-    /* Wait to set IP */
     etimer_set(&et, CLOCK_CONF_SECOND * 3);
 
     printf("Start..\n");
@@ -88,6 +87,66 @@ PROCESS_THREAD(program, ev, data) {
         } while (!(uip_closed() || uip_aborted() || uip_timedout()));
 
         printf("\nConnection closed.\n");
+    }
+
+    PROCESS_END();
+}
+
+ */
+
+int
+addr[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
+
+uip_ipaddr_t
+ipaddr;
+
+int
+port = 61613;
+
+struct uip_udp_conn
+*conn;
+
+char
+*str;
+
+int
+state;
+
+char
+buf[] = {0x40, 0x41, 0x42, 0x43, 0x44,};
+
+int
+len = 6;
+
+PROCESS(program_UDP, "Hello-UDP");
+AUTOSTART_PROCESSES(&program_UDP);
+
+/* Glowny program */
+PROCESS_THREAD(program_UDP, ev, data) {
+    static struct etimer et;
+
+    PROCESS_BEGIN();
+
+#if UIP_CONF_IPV6 > 0
+    uip_ip6addr(&ipaddr, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
+#else
+    uip_ipaddr(&ipaddr, addr[0], addr[1], addr[2], addr[3]);
+#endif
+
+    conn = udp_new(&ipaddr, UIP_HTONS(port), &state);
+    udp_bind(conn, UIP_HTONS(port + 1));
+    printf("Binded\n");
+
+    etimer_set(&et, CLOCK_CONF_SECOND * 3);
+
+    while (1) {
+        PROCESS_WAIT_EVENT();
+        if (uip_newdata()) {
+            str = uip_appdata;
+            str[uip_datalen()] = '\0';
+            printf("Received: '%s'\n", str);
+        }
+        etimer_reset(&et);
     }
 
     PROCESS_END();

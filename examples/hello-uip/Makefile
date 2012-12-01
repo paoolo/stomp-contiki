@@ -4,13 +4,13 @@ endif
 
 CONTIKI_PROJECT = hello-uip
 
-# TARGET = avr-zigduino
+TARGET = avr-zigduino
 # TARGET = native
-TARGET = minimal-net
+# TARGET = minimal-net
 # APPS = stomp 
 
-#WITH_UIP6 = 1
-#UIP_CONF_IPV6 = 1
+WITH_UIP6 = 1
+UIP_CONF_IPV6 = 1
 
 all: $(CONTIKI_PROJECT)
 

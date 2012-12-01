@@ -52,6 +52,7 @@ __acked() {
 #endif
 
 int
+// addr[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
 addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
 
 uip_ipaddr_t
@@ -87,7 +88,9 @@ PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
 #ifdef WITH_UDP
         if (ev == tcpip_event) {
             if (uip_newdata()) {
-                stomp_net_received((char*) uip_appdata, uip_datalen());
+                char *str = (char*)uip_appdata;
+                str[uip_datalen()] = '\0';
+                stomp_net_received(str, uip_datalen());
             }
         } else {
             if (state.buf != NULL) {

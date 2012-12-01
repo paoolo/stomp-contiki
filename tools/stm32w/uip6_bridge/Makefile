@@ -10,7 +10,8 @@ DEFINES=PROJECT_CONF_H=\"bridge-conf.h\"
 UIP_CONF_IPV6=1
 
 ifndef TARGET
-TARGET=mb851
+# TARGET=mb851
+TARGET=mb951
 endif
 
 PROJECTDIRS = dev
