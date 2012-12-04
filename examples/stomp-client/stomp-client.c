@@ -10,7 +10,7 @@
 #include "uip-debug.h"
 #include "ultra-simple-stomp-network.h"
 
-#define UUID "sensor"
+#define UUID "sensor0"
 #define TICKS 40
 
 STOMP_SENSOR(temp, 2, stomp_sensor_random_delta, 15, -30, 40, 10, 1);
