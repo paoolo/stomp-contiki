@@ -1,0 +1,1 @@
+stomp-common_src = stomp-tools.c stomp-strings.c stomp-sensor.c

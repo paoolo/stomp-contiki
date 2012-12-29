@@ -1,4 +1,5 @@
-#include "ultra-simple-stomp-network.h"
+#include "stomp-network.h"
+#include "stomp-strings.h"
 
 #include "stomp-tools.h"
 
@@ -11,9 +12,20 @@
 
 struct ultra_simple_stomp state;
 
+uip_ipaddr_t ipaddr;
+int port = 61613;
+
+#if UIP_CONF_IPV6 > 0
+int addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
+#else
+int addr[] = {10, 1, 1, 100};
+#endif
+
+PROCESS(stomp_network_process, "STOMP network process");
+
 static void
 __sent() {
-    stomp_net_sent(state.buf, state.len);
+    stomp_network_sent(state.buf, state.len);
     DELETE(state.buf);
 }
 
@@ -31,7 +43,6 @@ __send() {
 #endif
 #ifdef WITH_UDP
     uip_udp_packet_sendto(state.conn, state.buf + state.off, state.len, state.addr, UIP_HTONS(state.port));
-    __sent();
 #else
     uip_send(state.buf + state.off, state.sentlen);
 #endif
@@ -51,19 +62,7 @@ __acked() {
 }
 #endif
 
-int
-// addr[] = {0xaaaa, 0, 0, 0, 0, 0, 0, 1};
-addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
-
-uip_ipaddr_t
-ipaddr;
-
-int
-port = 61613;
-
-PROCESS(ultra_simple_stomp_network_process, "ultra-simple-STOMP network process");
-
-PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
+PROCESS_THREAD(stomp_network_process, ev, data) {
 #ifdef WITH_UDP
     static struct etimer et;
 #endif
@@ -76,11 +75,11 @@ PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
     uip_ipaddr(&ipaddr, addr[0], addr[1], addr[2], addr[3]);
 #endif
 
-    stomp_net_connect(&ipaddr, port);
+    stomp_network_connect(&ipaddr, port);
 #ifdef WITH_UDP
     etimer_set(&et, CLOCK_CONF_SECOND * 15);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
-    stomp_net_connected();
+    stomp_network_connected();
 #endif
 
     while (1) {
@@ -88,36 +87,39 @@ PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
 #ifdef WITH_UDP
         if (ev == tcpip_event) {
             if (uip_newdata()) {
-                char *str = (char*)uip_appdata;
-                str[uip_datalen()] = '\0';
-                stomp_net_received(str, uip_datalen());
+                if (uip_datalen() == 2) {
+                    PRINTA("Sent.\n");
+                    __sent();
+                } else {
+                    char *str = (char*) uip_appdata;
+                    str[uip_datalen()] = '\0';
+                    stomp_network_received(str, uip_datalen());
+                }
             }
-        } else {
-            if (state.buf != NULL) {
-                __send();
-            }
+        } else if (state.buf != NULL) {
+            __send();
         }
 #else
         if (uip_connected()) {
             state.flags = 0;
-            stomp_net_connected();
+            stomp_network_connected();
             __send();
             continue;
         }
         if (uip_closed()) {
-            stomp_net_closed();
+            stomp_network_closed();
         }
         if (uip_aborted()) {
-            stomp_net_aborted();
+            stomp_network_aborted();
         }
         if (uip_timedout()) {
-            stomp_net_timedout();
+            stomp_network_timedout();
         }
-        if (state.flags & ULTRA_SIMPLE_STOMP_FLAG_DISCONNECT) {
+        if (state.flags & STOMP_FLAG_DISCONNECT) {
             uip_close();
             continue;
         }
-        if (state.flags & ULTRA_SIMPLE_STOMP_FLAG_ABORT) {
+        if (state.flags & STOMP_FLAG_ABORT) {
             uip_abort();
             continue;
         }
@@ -125,7 +127,7 @@ PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
             __acked();
         }
         if (uip_newdata()) {
-            stomp_net_received((char*) uip_appdata, uip_datalen());
+            stomp_network_received((char*) uip_appdata, uip_datalen());
         }
         if (uip_rexmit() || uip_newdata() || uip_acked()) {
             __send();
@@ -139,7 +141,7 @@ PROCESS_THREAD(ultra_simple_stomp_network_process, ev, data) {
 }
 
 void
-stomp_net_connect(uip_ipaddr_t *ipaddr, int port) {
+stomp_network_connect(uip_ipaddr_t *ipaddr, int port) {
 #ifdef WITH_UDP
     state.conn = udp_new(ipaddr, UIP_HTONS(port), &state);
 #else
@@ -149,7 +151,7 @@ stomp_net_connect(uip_ipaddr_t *ipaddr, int port) {
         return;
     }
 #ifdef WITH_UDP
-    udp_bind(state.conn, UIP_HTONS(port + 1));
+    udp_bind(state.conn, UIP_HTONS(port));
 #endif
     state.addr = ipaddr;
     state.port = port;
@@ -163,36 +165,36 @@ stomp_net_connect(uip_ipaddr_t *ipaddr, int port) {
 #ifndef WITH_UDP
 
 void
-stomp_net_timedout() {
+stomp_network_timedout() {
     PRINTA("Timedout.\n");
 }
 
 void
-stomp_net_abort() {
-    state.flags = ULTRA_SIMPLE_STOMP_FLAG_ABORT;
+stomp_network_abort() {
+    state.flags = STOMP_FLAG_ABORT;
 }
 
 void
-stomp_net_aborted() {
+stomp_network_aborted() {
     PRINTA("Aborted.\n");
 }
 
 void
-stomp_net_close() {
-    state.flags = ULTRA_SIMPLE_STOMP_FLAG_DISCONNECT;
+stomp_network_close() {
+    state.flags = STOMP_FLAG_DISCONNECT;
 }
 
 void
-stomp_net_closed() {
+stomp_network_closed() {
     PRINTA("Closed.\n");
 }
 #endif
 
 void
-stomp_net_send(struct process *proc, char *buf, int len) {
+stomp_network_send(char *buf, int len) {
     state.buf = buf;
     state.len = len;
 #ifdef WITH_UDP
-    process_post(&ultra_simple_stomp_network_process, PROCESS_EVENT_CONTINUE, NULL);
+    process_post(&stomp_network_process, PROCESS_EVENT_CONTINUE, NULL);
 #endif
 }

@@ -1,5 +1,3 @@
-#include "stomp-global.h"
-
 #include "stomp-frame.h"
 #include "stomp-tools.h"
 
@@ -42,8 +40,7 @@ stomp_frame_add_header(const char *name, const char *value, struct stomp_header 
 }
 
 struct stomp_frame*
-stomp_frame_new_frame(const char *command, struct stomp_header *headers,
-        const char *payload) {
+stomp_frame_new_frame(const char *command, struct stomp_header *headers, const char *payload) {
     struct stomp_frame *frame = NEW(struct stomp_frame);
 
     frame->headers = headers;
@@ -59,16 +56,12 @@ stomp_frame_new_frame(const char *command, struct stomp_header *headers,
 }
 
 struct stomp_frame*
-stomp_frame_import(const char *stream, int length, struct stomp_frame *frame) {
+stomp_frame_import(const char *stream, int length) {
     int offset = 0;
+    struct stomp_frame *frame = NULL;
     struct stomp_header *header = NULL;
 
-    if (stream == NULL) {
-        return frame;
-    }
-    if (frame == NULL) {
-        frame = NEW(struct stomp_frame);
-    }
+    frame = NEW(struct stomp_frame);
 
     offset = stomp_tools_substr_to(stream, frame->command, offset, STOMP_NEW_LINE, length);
 
@@ -89,16 +82,18 @@ stomp_frame_import(const char *stream, int length, struct stomp_frame *frame) {
     return frame;
 }
 
-void
-stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
-    int size = 0, offset = 0, len = 0;
+char*
+stomp_frame_export(struct stomp_frame *frame) {
+    int lenght = 0, offset = 0, len = 0;
     struct stomp_header *header = NULL;
+    char *stream = NULL;
 
     if (frame == NULL) {
-        return;
+        return NULL;
     }
 
-    size = stomp_frame_length(frame);
+    lenght = stomp_frame_length(frame);
+    stream = NEW_ARRAY(char, sizeof (char) * lenght);
     memset(stream, 0, lenght);
 
     /* COMMAND */
@@ -145,9 +140,11 @@ stomp_frame_export(struct stomp_frame *frame, char *stream, int lenght) {
     stream[offset] = 0x00;
     offset = offset + 1;
 
-    if (offset != size) {
-        PRINTA("Stomp frame offset not equals with size: %d != %d\n", offset, size);
+    if (offset != lenght) {
+        PRINTA("Stomp frame offset not equals with size: %d != %d\n", offset, lenght);
     }
+
+    return stream;
 }
 
 int

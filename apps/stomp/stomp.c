@@ -1,10 +1,8 @@
-#include "stomp-global.h"
-
 #include "stomp.h"
-#include "stompc.h"
 #include "stomp-strings.h"
 #include "stomp-frame.h"
 #include "stomp-tools.h"
+#include "stomp-network.h"
 
 #include "uip-debug.h"
 
@@ -16,14 +14,22 @@ const char stomp_version_default[4] = {0x31, 0x2e, 0x31,};
 
 const char stomp_content_type_default[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
 
+static void
+__send(struct stomp_frame *frame) {
+    char *buf = NULL;
+    int len = 0;
+
+    len = stomp_frame_length(frame);
+    buf = NEW_ARRAY(char, sizeof (char) * len);
+
+    buf = stomp_frame_export(frame);
+    stomp_network_send(buf, len);
+}
+
 void
 stomp_connect(char* host, char* login, char* passcode) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("stomp_connect: start.\n");
-    PRINTA("CONNECT: host=%s, login=%s, pass=%s\n", host, login, passcode);
-#endif
 
     headers = stomp_frame_new_header(stomp_header_accept_version, stomp_version_default);
     if (passcode != NULL) {
@@ -40,22 +46,15 @@ stomp_connect(char* host, char* login, char* passcode) {
         return;
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
-    stompc_frame();
-
-#ifdef STOMP_TRACE
-    PRINTA("stomp_connect: stop.\n");
-#endif
+    frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
 
 void
 stomp_subscribe(char *id, char *destination, char *ack) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("stomp_subscribe: start.\n");
-    PRINTA("SUBSCRIBE: id=%s, destination=%s, ack=%s\n", id, destination, ack);
-#endif
 
     if (ack != NULL) {
         headers = stomp_frame_new_header(stomp_header_ack, ack);
@@ -78,21 +77,15 @@ stomp_subscribe(char *id, char *destination, char *ack) {
         return;
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
-    stompc_frame();
-
-#ifdef STOMP_TRACE
-    PRINTA("stomp_subscribe: stop.\n");
-#endif
+    frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
 
 void
 stomp_unsubscribe(char *id) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("UNSUBSCRIBE: id=%s\n", id);
-#endif
 
     if (id != NULL) {
         headers = stomp_frame_new_header(stomp_header_id, id);
@@ -102,17 +95,15 @@ stomp_unsubscribe(char *id) {
         return;
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
-    stompc_frame();
+    frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
 
 void
 stomp_send(char *destination, char *type, char *length, char *receipt, char *tx, char *message) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("SEND: dest=%s, type=%s, len=%s, receipt=%s, tx=%s, msg=%s\n", destination, type, length, receipt, tx, message);
-#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -128,6 +119,8 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
 
         sprintf((char*) _length, "%u", (unsigned int) strlen((char*) message));
         headers = stomp_frame_add_header(stomp_header_content_length, _length, headers);
+
+        DELETE(_length);
     }
     if (type != NULL) {
         headers = stomp_frame_add_header(stomp_header_content_type, type, headers);
@@ -143,17 +136,79 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
         return;
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_send, headers, message);
-    stompc_frame();
+    frame = stomp_frame_new_frame(stomp_command_send, headers, message);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
+}
+
+void
+stomp_ack(char *subscription, char *message_id, char *tx) {
+    struct stomp_frame *frame = NULL;
+    struct stomp_header *headers = NULL;
+
+    if (subscription != NULL) {
+        headers = stomp_frame_new_header(stomp_header_subscription, subscription);
+    } else {
+        PRINTA("stomp_ack: no subscription for ACK. Abort.\n");
+        stomp_frame_delete_header(headers);
+        return;
+    }
+    if (message_id != NULL) {
+        headers = stomp_frame_new_header(stomp_header_message_id, message_id);
+    } else {
+        PRINTA("stomp_ack: no message_id for ACK. Abort.\n");
+        stomp_frame_delete_header(headers);
+        return;
+    }
+    if (tx != NULL) {
+        headers = stomp_frame_new_header(stomp_header_transaction, tx);
+    } else {
+        PRINTA("stomp_ack: no tx for ACK. Abort.\n");
+        stomp_frame_delete_header(headers);
+        return;
+    }
+
+    frame = stomp_frame_new_frame(stomp_command_ack, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
+}
+
+void
+stomp_nack(char *subscription, char *message_id, char *tx) {
+    struct stomp_frame *frame = NULL;
+    struct stomp_header *headers = NULL;
+
+    if (subscription != NULL) {
+        headers = stomp_frame_new_header(stomp_header_subscription, subscription);
+    } else {
+        PRINTA("stomp_ack: no subscription for ACK. Abort.\n");
+        stomp_frame_delete_header(headers);
+        return;
+    }
+    if (message_id != NULL) {
+        headers = stomp_frame_new_header(stomp_header_message_id, message_id);
+    } else {
+        PRINTA("stomp_ack: no message_id for ACK. Abort.\n");
+        stomp_frame_delete_header(headers);
+        return;
+    }
+    if (tx != NULL) {
+        headers = stomp_frame_new_header(stomp_header_transaction, tx);
+    } else {
+        PRINTA("stomp_ack: no tx for ACK. Abort.\n");
+        stomp_frame_delete_header(headers);
+        return;
+    }
+
+    frame = stomp_frame_new_frame(stomp_command_nack, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
 
 void
 stomp_begin(char *tx) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("BEGIN: tx=%s\n", tx);
-#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -163,18 +218,15 @@ stomp_begin(char *tx) {
         return;
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
-    stompc_frame();
-
+    frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
 
 void
 stomp_commit(char *tx) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("COMMIT: tx=%s\n", tx);
-#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -184,18 +236,15 @@ stomp_commit(char *tx) {
         return;
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
-    stompc_frame();
-
+    frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
 
 void
 stomp_abort(char *tx) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("ABORT: tx=%s\n", tx);
-#endif
 
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
@@ -205,69 +254,87 @@ stomp_abort(char *tx) {
         return;
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
-    stompc_frame();
-
+    frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
 
 void
 stomp_disconnect(char *receipt) {
+    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
-
-#ifdef STOMP_TRACE
-    PRINTA("DISCONNECT: receipt=%s\n", receipt);
-#endif
 
     if (receipt != NULL) {
         headers = stomp_frame_new_header(stomp_header_receipt, receipt);
     }
 
-    c_state.frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
-    stompc_frame();
-
+    frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
+    __send(frame);
+    stomp_frame_delete_frame(frame);
 }
-
-/* Callbacks */
-
-#ifndef WITH_UDP
 
 void
-stompc_connected() {
-#ifdef STOMPC_TRACE
-    PRINTA("CONNECTED:\n");
-#endif
-    stomp_connected();
+stomp_network_sent(char *buf, int len) {
+    PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
+    stomp_sent(buf, len);
 }
-#endif
-
-#ifndef WITH_UDP
 
 void
-stompc_sent() {
-#ifdef STOMPC_TRACE
-    PRINTA("SENT:\n");
-#endif
-    stomp_sent();
+stomp_network_received(char *buf, int len) {
+    PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
+    // TODO do something with this message from broker
 }
-#endif
+
+void (*__stomp_sent)(char*, int);
 
 void
-stompc_received(char *buf, int len) {
-    struct stomp_frame *frame;
-#ifdef STOMPC_TRACE
-    PRINTA("RECEIVED: len=%d, buf=%s\n", len, buf);
-#endif
-    frame = stomp_frame_import(buf, len, NULL);
-    stomp_received(frame);
+stomp_sent(char *buf, int len) {
+    if (__stomp_sent != NULL) {
+        __stomp_sent(buf, len);
+    }
 }
 
-#ifndef WITH_UDP
+void (*__stomp_received)(char*, int) = NULL;
 
 void
-stompc_closed() {
-#ifdef STOMPC_TRACE
-    PRINTA("CLOSED:\n");
-#endif
-    stomp_closed();
+stomp_received(char *buf, int len) {
+    if (__stomp_received != NULL) {
+        __stomp_received(buf, len);
+    }
 }
-#endif
+
+void (*__stomp_connected)(char*, char*, char*, char*, char*, char*) = NULL;
+
+void
+stomp_connected(char *version, char *server, char *host_id, char *session, char *heart_beat, char *user_id) {
+    if (__stomp_connected != NULL) {
+        __stomp_connected(version, server, host_id, session, heart_beat, user_id);
+    }
+}
+
+void (*__stomp_message)(char*, char*, char*, char*, char*, char*) = NULL;
+
+void
+stomp_message(char *destination, char *message_id, char *subscription, char *content_type, char *content_length, char *message) {
+    if (__stomp_message != NULL) {
+        __stomp_message(destination, message_id, subscription, content_type, content_length, message);
+    }
+}
+
+void (*__stomp_error)(char*, char*, char*, char*) = NULL;
+
+void
+stomp_error(char *receipt_id, char *content_type, char *content_length, char *message) {
+    if (__stomp_error != NULL) {
+        __stomp_error(receipt_id, content_type, content_length, message);
+    }
+}
+
+void (*__stomp_receipt)(char*) = NULL;
+
+void
+stomp_receipt(char *receipt_id) {
+    if (__stomp_receipt != NULL) {
+        __stomp_receipt(receipt_id);
+    }
+}

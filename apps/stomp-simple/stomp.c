@@ -1,5 +1,5 @@
-#include "ultra-simple-stomp.h"
-#include "ultra-simple-stomp-network.h"
+#include "stomp.h"
+#include "stomp-network.h"
 
 #include "stomp-tools.h"
 #include "stomp-strings.h"
@@ -18,7 +18,7 @@ const char stomp_content_type_default[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70,
 struct pt pt;
 
 void
-stomp_connect(struct process *proc, char *host, char* login, char* pass) {
+stomp_connect(char *host, char* login, char* pass) {
     int off = 0, total_len = 0, host_len = 0, login_len = 0, pass_len = 0;
     char *buf = NULL;
 
@@ -98,11 +98,11 @@ stomp_connect(struct process *proc, char *host, char* login, char* pass) {
         PRINTA("CONNECT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("CONNECT: {host=\"%s\", login=\"%s\", pass=\"%s\"}.\n", host, login, pass);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_subscribe(struct process *proc, char *id, char *destination, char *ack) {
+stomp_subscribe(char *id, char *destination, char *ack) {
     int off = 0, total_len = 0, id_len = 0, destination_len = 0, ack_len = 0;
     char *buf = NULL;
 
@@ -179,11 +179,11 @@ stomp_subscribe(struct process *proc, char *id, char *destination, char *ack) {
         PRINTA("SUBSCRIBE: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("SUBSCRIBE: {id=\"%s\", destination=\"%s\", ack=\"%s\"}\n", id, destination, ack);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_unsubscribe(struct process *proc, char *id) {
+stomp_unsubscribe(char *id) {
     int off = 0, total_len = 0, id_len = 0;
     char *buf = NULL;
 
@@ -222,11 +222,11 @@ stomp_unsubscribe(struct process *proc, char *id) {
         PRINTA("UNSUBSCRIBE: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("UNSUBSCRIBE: {id=\"%s\"}.\n", id);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_send(struct process *proc, char *destination, char *type, char *length, char *receipt, char *tx, char *message) {
+stomp_send(char *destination, char *type, char *length, char *receipt, char *tx, char *message) {
     int off = 0, total_len = 0, destination_len = 0, type_len = 0, length_len = 0, receipt_len = 0, tx_len = 0, message_len = 0;
     char *buf = NULL;
 
@@ -349,11 +349,11 @@ stomp_send(struct process *proc, char *destination, char *type, char *length, ch
         PRINTA("SEND: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("SEND: {destination=\"%s\", type=\"%s\", length=\"%s\", receipt=\"%s\", tx=\"%s\", message=\"%s\"}\n", destination, type, length, receipt, tx, message);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_ack(struct process *proc, char *subscription, char *message_id, char *tx) {
+stomp_ack(char *subscription, char *message_id, char *tx) {
     int off = 0, total_len = 0, subscription_len = 0, message_id_len = 0, tx_len = 0;
     char *buf = NULL;
 
@@ -426,11 +426,11 @@ stomp_ack(struct process *proc, char *subscription, char *message_id, char *tx) 
         PRINTA("ACK: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("ACK: {subscription=\"%s\", message-id=\"%s\", tx=\"%s\"}.\n", subscription, message_id, tx);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_nack(struct process *proc, char *subscription, char *message_id, char *tx) {
+stomp_nack(char *subscription, char *message_id, char *tx) {
     int off = 0, total_len = 0, subscription_len = 0, message_id_len = 0, tx_len = 0;
     char *buf = NULL;
 
@@ -503,11 +503,11 @@ stomp_nack(struct process *proc, char *subscription, char *message_id, char *tx)
         PRINTA("NACK: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("NACK: {subscription=\"%s\", message-id=\"%s\", tx=\"%s\"}\n", subscription, message_id, tx);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_begin(struct process *proc, char *tx) {
+stomp_begin(char *tx) {
     int off = 0, total_len = 0, tx_len = 0;
     char *buf = NULL;
 
@@ -546,11 +546,11 @@ stomp_begin(struct process *proc, char *tx) {
         PRINTA("BEGIN: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("BEGIN: {tx=\"%s\"}\n", tx);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_commit(struct process *proc, char *tx) {
+stomp_commit(char *tx) {
     int off = 0, total_len = 0, tx_len = 0;
     char *buf = NULL;
 
@@ -589,11 +589,11 @@ stomp_commit(struct process *proc, char *tx) {
         PRINTA("COMMIT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("COMMIT: {tx=\"%s\"}.\n", tx);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_abort(struct process *proc, char *tx) {
+stomp_abort(char *tx) {
     int off = 0, total_len = 0, tx_len = 0;
     char *buf = NULL;
 
@@ -632,11 +632,11 @@ stomp_abort(struct process *proc, char *tx) {
         PRINTA("ABORT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("ABORT: {tx=\"%s\"}.\n", tx);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_disconnect(struct process *proc, char *receipt) {
+stomp_disconnect(char *receipt) {
     int off = 0, total_len = 0, receipt_len = 0;
     char *buf = NULL;
 
@@ -675,17 +675,17 @@ stomp_disconnect(struct process *proc, char *receipt) {
         PRINTA("DISCONNECT: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
     PRINTA("DISCONNECT: {receipt=\"%s\"}\n", receipt);
-    stomp_net_send(proc, buf, total_len + 1);
+    stomp_network_send(buf, total_len + 1);
 }
 
 void
-stomp_net_sent(char *buf, int len) {
+stomp_network_sent(char *buf, int len) {
     PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
     stomp_sent(buf, len);
 }
 
 void
-stomp_net_received(char *buf, int len) {
+stomp_network_received(char *buf, int len) {
     PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
     int off = 0;
     char *destination = NULL, *message_id = NULL, *subscription = NULL, *content_type = NULL,
@@ -952,5 +952,59 @@ stomp_net_received(char *buf, int len) {
         } else {
             stomp_received(buf, len);
         }
+    }
+}
+
+void (*__stomp_sent)(char*, int);
+
+void
+stomp_sent(char *buf, int len) {
+    if (__stomp_sent != NULL) {
+        __stomp_sent(buf, len);
+    }
+}
+
+void (*__stomp_received)(char*, int) = NULL;
+
+void
+stomp_received(char *buf, int len) {
+    if (__stomp_received != NULL) {
+        __stomp_received(buf, len);
+    }
+}
+
+void (*__stomp_connected)(char*, char*, char*, char*, char*, char*) = NULL;
+
+void
+stomp_connected(char *version, char *server, char *host_id, char *session, char *heart_beat, char *user_id) {
+    if (__stomp_connected != NULL) {
+        __stomp_connected(version, server, host_id, session, heart_beat, user_id);
+    }
+}
+
+void (*__stomp_message)(char*, char*, char*, char*, char*, char*) = NULL;
+
+void
+stomp_message(char *destination, char *message_id, char *subscription, char *content_type, char *content_length, char *message) {
+    if (__stomp_message != NULL) {
+        __stomp_message(destination, message_id, subscription, content_type, content_length, message);
+    }
+}
+
+void (*__stomp_error)(char*, char*, char*, char*) = NULL;
+
+void
+stomp_error(char *receipt_id, char *content_type, char *content_length, char *message) {
+    if (__stomp_error != NULL) {
+        __stomp_error(receipt_id, content_type, content_length, message);
+    }
+}
+
+void (*__stomp_receipt)(char*) = NULL;
+
+void
+stomp_receipt(char *receipt_id) {
+    if (__stomp_receipt != NULL) {
+        __stomp_receipt(receipt_id);
     }
 }

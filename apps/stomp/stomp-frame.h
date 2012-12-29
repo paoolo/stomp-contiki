@@ -40,10 +40,10 @@ struct stomp_frame*
 stomp_frame_new_frame(const char *command, struct stomp_header *headers, const char *payload);
 
 struct stomp_frame*
-stomp_frame_import(const char *stream, int length, struct stomp_frame *frame);
+stomp_frame_import(const char *stream, int length);
 
-void
-stomp_frame_export(struct stomp_frame *frame, char *stream, int length);
+char*
+stomp_frame_export(struct stomp_frame *frame);
 
 int
 stomp_frame_length(struct stomp_frame *frame);

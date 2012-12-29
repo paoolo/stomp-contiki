@@ -1,5 +1,3 @@
-#include "stomp-global.h"
-
 #ifndef STOMP_NETWORK_H
 #define STOMP_NETWORK_H
 
@@ -8,6 +6,8 @@
 
 #define STOMP_FLAG_DISCONNECT 1
 #define STOMP_FLAG_ABORT 2
+
+#define WITH_UDP
 
 struct stomp_network_state {
 #ifdef WITH_UDP
@@ -30,63 +30,39 @@ extern struct stomp_network_state network_state;
 
 extern struct stomp_queue network_send_queue;
 
-extern uip_ipaddr_t ipaddr;
-extern int port;
-
-#if UIP_CONF_IPV6 > 0
-extern int addr[];
-#else
-extern uint8_t addr[];
-#endif
-
-PROCESS_NAME(ultra_simple_stomp_network_process);
 PROCESS_NAME(stomp_network_send_process);
+PROCESS_NAME(stomp_network_process);
 
-unsigned char
-stomp_network_send(char *buf, int len);
+void
+stomp_network_connect(uip_ipaddr_t *ipaddr, int port);
 
-#ifndef WITH_UDP
-unsigned char
-stomp_network_close();
-#endif
-
-#ifndef WITH_UDP
-unsigned char
-stomp_network_abort();
-#endif
-
-/* TODO protocol negotation and registering to server */
-#ifndef WITH_UDP
 void
 stomp_network_connected();
-#endif
 
-/* TODO notyfing about sent message to server */
 #ifndef WITH_UDP
 void
-stomp_network_sent();
-#endif
+stomp_network_timedout();
 
-/* TODO parsing frame and to do something with this */
 void
-stomp_network_received(char *buf, int len);
+stomp_network_abort();
 
-/* TODO clean up session */
-#ifndef WITH_UDP
+void
+stomp_network_aborted();
+
+void
+stomp_network_close();
+
 void
 stomp_network_closed();
 #endif
 
-/* TODO notifing about aborted connection */
-#ifndef WITH_UDP
 void
-stomp_network_aborted();
-#endif
+stomp_network_send(char *buf, int len);
 
-/* TODO notifing about timedout connection */
-#ifndef WITH_UDP
 void
-stomp_network_timedout();
-#endif
+stomp_network_sent(char *buf, int len);
+
+void
+stomp_network_received(char *buf, int len);
 
 #endif /* STOMP_NETWORK_H */

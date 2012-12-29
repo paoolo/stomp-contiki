@@ -1,4 +1,3 @@
-
 #include "stomp-strings.h"
 
 const char stomp_command_abort[STOMP_COMMAND_ABORT_LEN + 1] =

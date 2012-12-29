@@ -1,11 +1,4 @@
-#include "ultra-simple-stomp.h"
 #include "stomp-sensor.h"
-
-#include "contiki.h"
-
-#include "uip-debug.h"
-
-#include <stdlib.h>
 
 int stomp_sensor_const(int min, int max, int delta, int step, int value) {
     return value;

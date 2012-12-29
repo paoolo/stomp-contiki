@@ -1,13 +1,13 @@
+#ifndef STOMP_NETWORK_H
+#define	STOMP_NETWORK_H
+
 #include "contiki.h"
 #include "contiki-net.h"
 
-#ifndef ULTRA_SIMPLE_STOMP_NETWORK_H
-#define	ULTRA_SIMPLE_STOMP_NETWORK_H
+#define STOMP_FLAG_DISCONNECT 1
+#define STOMP_FLAG_ABORT 2
 
-#define ULTRA_SIMPLE_STOMP_FLAG_DISCONNECT 1
-#define ULTRA_SIMPLE_STOMP_FLAG_ABORT 2
-
-#define ULTRA_SIMPLE_STOMP_BUF_SIZE 256
+#define STOMP_BUF_SIZE 256
 
 #define WITH_UDP
 
@@ -30,13 +30,13 @@ struct ultra_simple_stomp {
 
 extern struct ultra_simple_stomp state;
 
-PROCESS_NAME(ultra_simple_stomp_network_process);
+PROCESS_NAME(stomp_network_process);
 
 void
-stomp_net_connect(uip_ipaddr_t *ipaddr, int port);
+stomp_network_connect(uip_ipaddr_t *ipaddr, int port);
 
 void
-stomp_net_connected();
+stomp_network_connected();
 
 #ifndef WITH_UDP
 void
@@ -56,13 +56,12 @@ stomp_net_closed();
 #endif
 
 void
-stomp_net_send(struct process *proc, char *buf, int len);
+stomp_network_send(char *buf, int len);
 
 void
-stomp_net_sent(char *buf, int len);
+stomp_network_sent(char *buf, int len);
 
 void
-stomp_net_received(char *buf, int len);
+stomp_network_received(char *buf, int len);
 
-#endif	/* ULTRA_SIMPLE_STOMP_NETWORK_H */
-
+#endif	/* STOMP_NETWORK_H */

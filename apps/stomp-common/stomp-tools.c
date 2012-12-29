@@ -1,5 +1,3 @@
-#include "stomp-global.h"
-
 #include "stomp-tools.h"
 
 #include <string.h>
@@ -21,13 +19,10 @@ stomp_tools_substr_to(const char *src, char *dest, int offset, char delim, int l
     int len = 0;
 
     if (src != NULL && (src + offset) != NULL
-            && (*(src + offset) != 0x00
-            || *(src + offset) != delim)) {
+            && (*(src + offset) != 0x00 || *(src + offset) != delim)) {
 
-        while (offset + len < length
-                && (src + offset + len) != NULL
-                && *(src + offset + len) != 0x00
-                && *(src + offset + len) != delim) {
+        while (offset + len < length && (src + offset + len) != NULL
+                && *(src + offset + len) != 0x00 && *(src + offset + len) != delim) {
             len = len + 1;
         }
     }
