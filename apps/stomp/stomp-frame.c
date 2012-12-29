@@ -8,9 +8,12 @@
 
 void
 stomp_frame_delete_header(struct stomp_header *header) {
-    if (header != NULL) {
-        stomp_frame_delete_header(header->next);
-        DELETE(header->next);
+    struct stomp_header *ptr = NULL;
+
+    while (header != NULL) {
+        ptr = header;
+        header = header->next;
+        DELETE(ptr);
     }
 }
 
@@ -18,7 +21,7 @@ void
 stomp_frame_delete_frame(struct stomp_frame *frame) {
     if (frame != NULL) {
         stomp_frame_delete_header(frame->headers);
-        DELETE(frame->headers);
+        DELETE(frame);
     }
 }
 

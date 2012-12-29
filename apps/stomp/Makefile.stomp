@@ -1,1 +1,1 @@
-stomp_src = stomp.c stomp-network.c stomp-frame.c stomp-queue.c
+stomp_src = stomp.c stomp-network.c stomp-frame.c

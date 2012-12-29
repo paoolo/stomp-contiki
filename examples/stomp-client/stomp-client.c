@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "stomp.h"
+#include "stomp-network.h"
 #include "stomp-sensor.h"
 #include "stomp-tools.h"
 
@@ -20,7 +21,7 @@ STOMP_SENSOR(pres, 2, stomp_sensor_random_delta, 1000, 800, 1200, 50, 5);
 STOMP_SENSOR_PROCESSES(&temp_data, &hum_data, &pres_data);
 
 PROCESS(stomp_client_process, "STOMP client");
-AUTOSTART_PROCESSES(&stomp_client_process, &stomp_network_process, &stomp_network_send_process, &temp, &hum, &pres);
+AUTOSTART_PROCESSES(&stomp_client_process, &stomp_network_process, &temp, &hum, &pres);
 
 volatile char connected;
 

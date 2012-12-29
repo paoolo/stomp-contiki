@@ -20,15 +20,14 @@ __send(struct stomp_frame *frame) {
     int len = 0;
 
     len = stomp_frame_length(frame);
-    buf = NEW_ARRAY(char, sizeof (char) * len);
-
     buf = stomp_frame_export(frame);
+    stomp_frame_delete_frame(frame);
+
     stomp_network_send(buf, len);
 }
 
 void
 stomp_connect(char* host, char* login, char* passcode) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     headers = stomp_frame_new_header(stomp_header_accept_version, stomp_version_default);
@@ -46,14 +45,11 @@ stomp_connect(char* host, char* login, char* passcode) {
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_connect, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_connect, headers, NULL));
 }
 
 void
 stomp_subscribe(char *id, char *destination, char *ack) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (ack != NULL) {
@@ -77,14 +73,11 @@ stomp_subscribe(char *id, char *destination, char *ack) {
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_subscribe, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_subscribe, headers, NULL));
 }
 
 void
 stomp_unsubscribe(char *id) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (id != NULL) {
@@ -95,14 +88,11 @@ stomp_unsubscribe(char *id) {
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_unsubscribe, headers, NULL));
 }
 
 void
 stomp_send(char *destination, char *type, char *length, char *receipt, char *tx, char *message) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (tx != NULL) {
@@ -136,14 +126,11 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_send, headers, message);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_send, headers, message));
 }
 
 void
 stomp_ack(char *subscription, char *message_id, char *tx) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (subscription != NULL) {
@@ -168,46 +155,40 @@ stomp_ack(char *subscription, char *message_id, char *tx) {
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_ack, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_ack, headers, NULL));
 }
 
 void
 stomp_nack(char *subscription, char *message_id, char *tx) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (subscription != NULL) {
         headers = stomp_frame_new_header(stomp_header_subscription, subscription);
     } else {
-        PRINTA("stomp_ack: no subscription for ACK. Abort.\n");
+        PRINTA("stomp_ack: no subscription for NACK. Abort.\n");
         stomp_frame_delete_header(headers);
         return;
     }
     if (message_id != NULL) {
         headers = stomp_frame_new_header(stomp_header_message_id, message_id);
     } else {
-        PRINTA("stomp_ack: no message_id for ACK. Abort.\n");
+        PRINTA("stomp_ack: no message_id for NACK. Abort.\n");
         stomp_frame_delete_header(headers);
         return;
     }
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
-        PRINTA("stomp_ack: no tx for ACK. Abort.\n");
+        PRINTA("stomp_ack: no tx for NACK. Abort.\n");
         stomp_frame_delete_header(headers);
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_nack, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_nack, headers, NULL));
 }
 
 void
 stomp_begin(char *tx) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (tx != NULL) {
@@ -218,14 +199,11 @@ stomp_begin(char *tx) {
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_begin, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_begin, headers, NULL));
 }
 
 void
 stomp_commit(char *tx) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (tx != NULL) {
@@ -236,14 +214,11 @@ stomp_commit(char *tx) {
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_commit, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_commit, headers, NULL));
 }
 
 void
 stomp_abort(char *tx) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (tx != NULL) {
@@ -254,23 +229,18 @@ stomp_abort(char *tx) {
         return;
     }
 
-    frame = stomp_frame_new_frame(stomp_command_abort, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_abort, headers, NULL));
 }
 
 void
 stomp_disconnect(char *receipt) {
-    struct stomp_frame *frame = NULL;
     struct stomp_header *headers = NULL;
 
     if (receipt != NULL) {
         headers = stomp_frame_new_header(stomp_header_receipt, receipt);
     }
 
-    frame = stomp_frame_new_frame(stomp_command_disconnect, headers, NULL);
-    __send(frame);
-    stomp_frame_delete_frame(frame);
+    __send(stomp_frame_new_frame(stomp_command_disconnect, headers, NULL));
 }
 
 void
