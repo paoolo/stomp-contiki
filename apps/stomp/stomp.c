@@ -5,6 +5,7 @@
 #include "stomp-network.h"
 
 #include "uip-debug.h"
+#include "../stomp-simple/stomp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -251,8 +252,106 @@ stomp_network_sent(char *buf, int len) {
 
 void
 stomp_network_received(char *buf, int len) {
+    struct stomp_frame *frame = NULL;
+    struct stomp_header *header = NULL;
+
     PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
-    // TODO do something with this message from broker
+
+    frame = stomp_frame_import(buf, len);
+    if (frame != NULL && frame->command != NULL) {
+        if (frame->command[0] == stomp_command_message[0]) {
+            char *destination = NULL, *message_id = NULL, *subscription = NULL,
+                    *content_type = NULL, *content_length = NULL;
+
+            header = frame->headers;
+            while (header != NULL && header->name != NULL) {
+                if (header->name[0] == stomp_header_destination[0]) {
+                    destination = header->value;
+                } else if (header->name[0] == stomp_header_message_id[0]) {
+                    message_id = header->value;
+                } else if (header->name[0] == stomp_header_subscription[0]) {
+                    subscription = header->value;
+                } else if (header->name[0] == stomp_header_content_type[0]) {
+                    if (strlen(header->name) > 8) {
+                        if (header->name[8] == stomp_header_content_type[8]) {
+                            content_type = header->value;
+                        } else if (header->name[8] == stomp_header_content_length[8]) {
+                            content_length = header->value;
+                        }
+                    }
+                }
+                header = header->next;
+            }
+            stomp_message(destination, message_id, subscription, content_type,
+                    content_length, frame->payload);
+
+        } else if (frame->command[0] == stomp_command_error[0]) {
+            char *receipt_id = NULL, *content_type = NULL, *content_length = NULL;
+
+            header = frame->headers;
+            while (header != NULL && header->name != NULL) {
+                if (header->name[0] == stomp_header_receipt_id[0]) {
+                    receipt_id = header->value;
+                } else if (header->name[0] == stomp_header_content_type[0]) {
+                    if (strlen(header->name) > 8) {
+                        if (header->name[8] == stomp_header_content_type[8]) {
+                            content_type = header->value;
+                        } else if (header->name[8] == stomp_header_content_length[8]) {
+                            content_length = header->value;
+                        }
+                    }
+                }
+                header = header->next;
+            }
+            stomp_error(receipt_id, content_type, content_length, frame->payload);
+
+        } else if (frame->command[0] == stomp_command_receipt[0]) {
+            char *receipt_id = NULL;
+
+            header = frame->headers;
+            while (header != NULL && header->name != NULL) {
+                if (header->name[0] == stomp_header_receipt_id[0]) {
+                    receipt_id = header->value;
+                }
+            }
+            stomp_receipt(receipt_id);
+
+        } else if (frame->command[0] == stomp_command_connected[0]) {
+            char *version = NULL, *server = NULL, *session = NULL, *host_id = NULL,
+                    *heart_beat = NULL, *user_id = NULL;
+
+            header = frame->headers;
+            while (header != NULL && header->name != NULL) {
+                if (header->name[0] == stomp_header_version[0]) {
+                    version = header->value;
+                } else if (header->name[0] == stomp_header_server[0]) {
+                    if (strlen(header->name) > 2) {
+                        if (header->name[2] == stomp_header_server[2]) {
+                            server = header->value;
+                        } else if (header->name[2] == stomp_header_session[2]) {
+                            session = header->value;
+                        }
+                    }
+                } else if (header->name[0] == stomp_header_host_id[0]) {
+                    if (strlen(header->name) > 1) {
+                        if (header->name[1] == stomp_header_host_id[1]) {
+                            host_id = header->value;
+                        } else if (header->name[1] == stomp_header_heart_beat[1]) {
+                            heart_beat = header->value;
+                        }
+                    }
+                } else if (header->name[0] == stomp_header_user_id[0]) {
+                    user_id = header->value;
+                }
+                header = header->next;
+            }
+            stomp_connected(version, server, host_id, session, heart_beat, user_id);
+
+        } else {
+            stomp_received(buf, len);
+        }
+    }
+    stomp_frame_delete_frame(frame);
 }
 
 void (*__stomp_sent)(char*, int);

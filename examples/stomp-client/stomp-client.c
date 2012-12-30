@@ -23,7 +23,7 @@ STOMP_SENSOR_PROCESSES(&temp_data, &hum_data, &pres_data);
 PROCESS(stomp_client_process, "STOMP client");
 AUTOSTART_PROCESSES(&stomp_client_process, &stomp_network_process, &temp, &hum, &pres);
 
-volatile char connected;
+volatile int connected;
 
 void
 _sensor_set_all(char *update, char *periodic) {
@@ -327,9 +327,7 @@ _stomp_error(char* receipt_id, char* content_type, char* content_length, char *m
     PRINTA("ERROR: {receipt_id=\"%s\", content_type=\"%s\", content_length=\"%s\", message=\"%s\"}.\n", receipt_id, content_type, content_length, message);
 
     /* Try to CONNECT again. */
-    PRINTA("ERROR:%d\n", connected);
     connected = 0;
-    PRINTA("ERROR:%d\n", connected);
 }
 
 void
