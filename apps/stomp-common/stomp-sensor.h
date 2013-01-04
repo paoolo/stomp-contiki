@@ -24,17 +24,19 @@ struct stomp_sensor {
     int value;
 };
 
-#define STOMP_SENSOR(PROCESS_NAME, FREQ, NEXT_VALUE, INIT, MIN, MAX, DELTA, STEP) \
+#define STOMP_SENSOR(PROCESS_NAME, FREQ, NEXT_VALUE, INIT, MIN, MAX, DELTA, STEP, PERIODIC, UPDATE) \
 static struct stomp_sensor PROCESS_NAME##_data; \
 PROCESS(PROCESS_NAME, "STOMP sensor " #PROCESS_NAME); \
 PROCESS_THREAD(PROCESS_NAME, ev, data) { \
     static struct etimer et; \
     PROCESS_BEGIN(); \
     PROCESS_NAME##_data.value = INIT; \
+    PROCESS_NAME##_data.name = #PROCESS_NAME; \
+    PROCESS_NAME##_data.periodic = PERIODIC; \
+    PROCESS_NAME##_data.update = UPDATE; \
     etimer_set(&et, CLOCK_CONF_SECOND * FREQ); \
     while (1) { \
         PROCESS_WAIT_EVENT(); \
-        PROCESS_NAME##_data.name = #PROCESS_NAME; \
         PROCESS_NAME##_data.last = PROCESS_NAME##_data.value; \
         PROCESS_NAME##_data.value = NEXT_VALUE(MIN, MAX, DELTA, STEP, PROCESS_NAME##_data.value); \
         etimer_restart(&et); \

@@ -10,7 +10,7 @@
 #define STOMP_HEADER_VALUE_LEN 64
 
 #define STOMP_FRAME_COMMAND_LEN 12
-#define STOMP_FRAME_PAYLOAD_LEN 128
+#define STOMP_FRAME_PAYLOAD_LEN 256
 
 struct stomp_header {
     struct stomp_header *next;

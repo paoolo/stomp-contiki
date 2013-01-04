@@ -1,3 +1,6 @@
+#include "contiki.h"
+#include "contiki-net.h"
+
 #ifndef STOMP_H
 #define STOMP_H
 

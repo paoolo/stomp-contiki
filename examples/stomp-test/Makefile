@@ -1,5 +1,5 @@
 CONTIKI = ../..
-CONTIKI_PROJECT = stomp-client
+CONTIKI_PROJECT = stomp-test
 APPS = stomp-simple stomp-common
 # APPS = stomp stomp-common
 

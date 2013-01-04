@@ -29,8 +29,8 @@ struct stomp_header*
 stomp_frame_new_header(const char *name, const char *value) {
     struct stomp_header *header = NEW(struct stomp_header);
 
-    memcpy(header->name, name, strlen((char*) name) + 1);
-    memcpy(header->value, value, strlen((char*) value) + 1);
+    memcpy(header->name, name, strlen((char*) name));
+    memcpy(header->value, value, strlen((char*) value));
 
     return header;
 }
@@ -96,7 +96,7 @@ stomp_frame_export(struct stomp_frame *frame) {
     }
 
     lenght = stomp_frame_length(frame);
-    stream = NEW_ARRAY(char, sizeof (char) * lenght);
+    stream = NEW_ARRAY(char, lenght);
     memset(stream, 0, lenght);
 
     /* COMMAND */

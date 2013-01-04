@@ -1,11 +1,14 @@
 #include "stomp.h"
-#include "stomp-strings.h"
-#include "stomp-frame.h"
-#include "stomp-tools.h"
 #include "stomp-network.h"
 
+#include "stomp-tools.h"
+#include "stomp-strings.h"
+#include "stomp-frame.h"
+
+#include "contiki.h"
+#include "contiki-net.h"
+
 #include "uip-debug.h"
-#include "../stomp-simple/stomp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +28,7 @@ __send(struct stomp_frame *frame) {
     stomp_frame_delete_frame(frame);
 
     stomp_network_send(buf, len);
+    DELETE(buf);
 }
 
 void
@@ -105,10 +109,14 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
     if (length != NULL) {
         headers = stomp_frame_add_header(stomp_header_content_length, length, headers);
     } else {
-        char *_length = NEW_ARRAY(char, 3);
+        char *_length = NEW_ARRAY(char, 4);
         PRINTA("stomp_send: no content-length for SEND. Set to computed value.\n");
 
-        sprintf((char*) _length, "%u", (unsigned int) strlen((char*) message));
+        if (message != NULL) {
+            sprintf((char*) _length, "%u", (unsigned int) strlen((char*) message));
+        } else {
+            sprintf((char*) _length, "0");
+        }
         headers = stomp_frame_add_header(stomp_header_content_length, _length, headers);
 
         DELETE(_length);
@@ -313,6 +321,7 @@ stomp_network_received(char *buf, int len) {
                 if (header->name[0] == stomp_header_receipt_id[0]) {
                     receipt_id = header->value;
                 }
+                header = header->next;
             }
             stomp_receipt(receipt_id);
 
@@ -350,11 +359,13 @@ stomp_network_received(char *buf, int len) {
         } else {
             stomp_received(buf, len);
         }
+    } else {
+        stomp_received(buf, len);
     }
     stomp_frame_delete_frame(frame);
 }
 
-void (*__stomp_sent)(char*, int);
+void (*__stomp_sent)(char*, int) = NULL;
 
 void
 stomp_sent(char *buf, int len) {

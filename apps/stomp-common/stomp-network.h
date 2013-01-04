@@ -7,12 +7,10 @@
 #define STOMP_FLAG_DISCONNECT 1
 #define STOMP_FLAG_ABORT 2
 
-#define STOMP_BUF_SIZE 256
-
-#define WITH_UDP
+#define STOMP_NETWORK_BUF_SIZE 512
 
 struct ultra_simple_stomp {
-#ifdef WITH_UDP
+#if WITH_UDP > 0
     struct uip_udp_conn *conn;
 #else
     struct uip_conn *conn;
@@ -22,7 +20,7 @@ struct ultra_simple_stomp {
     int port;
     char flags;
 
-    char *buf;
+    char buf[STOMP_NETWORK_BUF_SIZE];
     int off;
     int len;
     int sentlen;
@@ -35,10 +33,14 @@ PROCESS_NAME(stomp_network_process);
 void
 stomp_network_connect(uip_ipaddr_t *ipaddr, int port);
 
+#define STOMP_NETWORK_CONNECT(ipaddr, port) \
+        stomp_network_connect(ipaddr, port); \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
+
 void
 stomp_network_connected();
 
-#ifndef WITH_UDP
+#if WITH_UDP > 0
 void
 stomp_net_timedout();
 

@@ -9,6 +9,8 @@
 
 #include "uip-debug.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 const char stomp_version_default[4] = {0x31, 0x2e, 0x31,};
@@ -348,7 +350,8 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
     if (off != total_len) {
         PRINTA("SEND: Length doesn't match: off(%d) != total_len(%d).\n", off, total_len);
     }
-    PRINTA("SEND: {destination=\"%s\", type=\"%s\", length=\"%s\", receipt=\"%s\", tx=\"%s\", message=\"%s\"}\n", destination, type, length, receipt, tx, message);
+    PRINTA("SEND: {destination=\"%s\", type=\"%s\", length=\"%s\", receipt=\"%s\", tx=\"%s\", message=\"%s\"}\n",
+            destination, type, length, receipt, tx, message);
     stomp_network_send(buf, total_len + 1);
 }
 

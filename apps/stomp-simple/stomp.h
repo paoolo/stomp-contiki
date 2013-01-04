@@ -1,8 +1,11 @@
 #include "contiki.h"
 #include "contiki-net.h"
 
-#ifndef ULTRA_SIMPLE_STOMP_H
-#define	ULTRA_SIMPLE_STOMP_H
+#ifndef STOMP_H
+#define STOMP_H
+
+extern const char stomp_version_default[4];
+extern const char stomp_content_type_default[11];
 
 void
 stomp_connect(char *host, char* login, char* pass);
@@ -104,5 +107,4 @@ void
 stomp_receipt(char *receipt_id);
 #define STOMP_REGISTER_STOMP_RECEIPT(func) __stomp_receipt = func
 
-#endif	/* ULTRA_SIMPLE_STOMP_H */
-
+#endif /* STOMP_H */
