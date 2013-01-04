@@ -101,6 +101,7 @@ stomp_connect(char *host, char* login, char* pass) {
     }
     PRINTA("CONNECT: {host=\"%s\", login=\"%s\", pass=\"%s\"}.\n", host, login, pass);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -182,6 +183,7 @@ stomp_subscribe(char *id, char *destination, char *ack) {
     }
     PRINTA("SUBSCRIBE: {id=\"%s\", destination=\"%s\", ack=\"%s\"}\n", id, destination, ack);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -225,6 +227,7 @@ stomp_unsubscribe(char *id) {
     }
     PRINTA("UNSUBSCRIBE: {id=\"%s\"}.\n", id);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -353,6 +356,7 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
     PRINTA("SEND: {destination=\"%s\", type=\"%s\", length=\"%s\", receipt=\"%s\", tx=\"%s\", message=\"%s\"}\n",
             destination, type, length, receipt, tx, message);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -430,6 +434,7 @@ stomp_ack(char *subscription, char *message_id, char *tx) {
     }
     PRINTA("ACK: {subscription=\"%s\", message-id=\"%s\", tx=\"%s\"}.\n", subscription, message_id, tx);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -507,6 +512,7 @@ stomp_nack(char *subscription, char *message_id, char *tx) {
     }
     PRINTA("NACK: {subscription=\"%s\", message-id=\"%s\", tx=\"%s\"}\n", subscription, message_id, tx);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -550,6 +556,7 @@ stomp_begin(char *tx) {
     }
     PRINTA("BEGIN: {tx=\"%s\"}\n", tx);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -593,6 +600,7 @@ stomp_commit(char *tx) {
     }
     PRINTA("COMMIT: {tx=\"%s\"}.\n", tx);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -636,6 +644,7 @@ stomp_abort(char *tx) {
     }
     PRINTA("ABORT: {tx=\"%s\"}.\n", tx);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
@@ -679,6 +688,7 @@ stomp_disconnect(char *receipt) {
     }
     PRINTA("DISCONNECT: {receipt=\"%s\"}\n", receipt);
     stomp_network_send(buf, total_len + 1);
+    DELETE(buf);
 }
 
 void
