@@ -117,7 +117,7 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
                     stomp_network_received(str, uip_datalen());
                 }
             }
-        } else if (state.len != NULL) {
+        } else if (state.len != 0) {
             __send();
         }
 #else

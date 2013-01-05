@@ -17,8 +17,6 @@ const char stomp_version_default[4] = {0x31, 0x2e, 0x31,};
 
 const char stomp_content_type_default[11] = {0x74, 0x65, 0x78, 0x74, 0x2f, 0x70, 0x6c, 0x61, 0x69, 0x6e,};
 
-struct pt pt;
-
 void
 stomp_connect(char *host, char* login, char* pass) {
     int off = 0, total_len = 0, host_len = 0, login_len = 0, pass_len = 0;
