@@ -143,9 +143,11 @@ stomp_frame_export(struct stomp_frame *frame) {
     stream[offset] = 0x00;
     offset = offset + 1;
 
+#if STOMP_DEBUG > 0
     if (offset != lenght) {
         PRINTA("Stomp frame offset not equals with size: %d != %d\n", offset, lenght);
     }
+#endif
 
     return stream;
 }

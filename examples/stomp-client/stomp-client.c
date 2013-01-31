@@ -15,6 +15,7 @@
 
 #if UIP_CONF_IPV6 > 0
 int addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
+// int addr[] = {0x2001, 0x470, 0x1f0a, 0xbf2, 0, 0, 0, 0x2};
 #else
 int addr[] = {10, 1, 1, 100};
 #endif
@@ -22,9 +23,9 @@ int addr[] = {10, 1, 1, 100};
 uip_ipaddr_t ipaddr;
 int port = 61613;
 
-STOMP_SENSOR(temp, 2, stomp_sensor_random_delta, 15, -30, 40, 10, 1, STOMP_SENSOR_PERIODIC_NONE, STOMP_SENSOR_NO_UPDATE);
-STOMP_SENSOR(hum, 2, stomp_sensor_random_delta, 60, 0, 100, 20, 5, STOMP_SENSOR_PERIODIC_NONE, STOMP_SENSOR_NO_UPDATE);
-STOMP_SENSOR(pres, 2, stomp_sensor_random_delta, 1000, 800, 1200, 50, 5, STOMP_SENSOR_PERIODIC_NONE, STOMP_SENSOR_NO_UPDATE);
+STOMP_SENSOR(temp, 2, stomp_sensor_random_delta, 15, -30, 40, 10, 1, STOMP_SENSOR_PERIODIC_15s, STOMP_SENSOR_UPDATE_PERIODICALLY);
+STOMP_SENSOR(hum, 2, stomp_sensor_random_delta, 60, 0, 100, 20, 5, STOMP_SENSOR_PERIODIC_15s, STOMP_SENSOR_UPDATE_PERIODICALLY);
+STOMP_SENSOR(pres, 2, stomp_sensor_random_delta, 1000, 800, 1200, 50, 5, STOMP_SENSOR_PERIODIC_15s, STOMP_SENSOR_UPDATE_PERIODICALLY);
 
 STOMP_SENSOR_PROCESSES(&temp_data, &hum_data, &pres_data);
 

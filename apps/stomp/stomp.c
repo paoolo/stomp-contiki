@@ -45,7 +45,9 @@ stomp_connect(char* host, char* login, char* passcode) {
     if (host != NULL) {
         headers = stomp_frame_add_header(stomp_header_host, host, headers);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_connect: no host for CONNECT. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -60,20 +62,26 @@ stomp_subscribe(char *id, char *destination, char *ack) {
     if (ack != NULL) {
         headers = stomp_frame_new_header(stomp_header_ack, ack);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_subscribe: no ack for SUBSCRIBE. Set to 'auto'.\n");
+#endif
         headers = stomp_frame_new_header(stomp_header_ack, stomp_header_auto);
     }
     if (destination != NULL) {
         headers = stomp_frame_add_header(stomp_header_destination, destination, headers);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_subscribe: no destination for SUBSCRIBE. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
     if (id != NULL) {
         headers = stomp_frame_add_header(stomp_header_id, id, headers);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_subscribe: no id for SUBSCRIBE. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -88,7 +96,9 @@ stomp_unsubscribe(char *id) {
     if (id != NULL) {
         headers = stomp_frame_new_header(stomp_header_id, id);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_unsubscribe: no id for UNSUBSCRIBE. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -110,8 +120,9 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
         headers = stomp_frame_add_header(stomp_header_content_length, length, headers);
     } else {
         char *_length = NEW_ARRAY(char, 4);
+#if STOMP_DEBUG > 2
         PRINTA("stomp_send: no content-length for SEND. Set to computed value.\n");
-
+#endif
         if (message != NULL) {
             sprintf((char*) _length, "%u", (unsigned int) strlen((char*) message));
         } else {
@@ -124,13 +135,17 @@ stomp_send(char *destination, char *type, char *length, char *receipt, char *tx,
     if (type != NULL) {
         headers = stomp_frame_add_header(stomp_header_content_type, type, headers);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_send: no content-type for SEND. Set to 'text/plain'.\n");
+#endif
         headers = stomp_frame_add_header(stomp_header_content_type, stomp_content_type_default, headers);
     }
     if (destination != NULL) {
         headers = stomp_frame_add_header(stomp_header_destination, destination, headers);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_send: no destination for SEND. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -145,21 +160,27 @@ stomp_ack(char *subscription, char *message_id, char *tx) {
     if (subscription != NULL) {
         headers = stomp_frame_new_header(stomp_header_subscription, subscription);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_ack: no subscription for ACK. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
     if (message_id != NULL) {
         headers = stomp_frame_new_header(stomp_header_message_id, message_id);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_ack: no message_id for ACK. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_ack: no tx for ACK. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -174,21 +195,27 @@ stomp_nack(char *subscription, char *message_id, char *tx) {
     if (subscription != NULL) {
         headers = stomp_frame_new_header(stomp_header_subscription, subscription);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_ack: no subscription for NACK. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
     if (message_id != NULL) {
         headers = stomp_frame_new_header(stomp_header_message_id, message_id);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_ack: no message_id for NACK. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_ack: no tx for NACK. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -203,7 +230,9 @@ stomp_begin(char *tx) {
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_begin: no tx for BEGIN. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -218,7 +247,9 @@ stomp_commit(char *tx) {
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_commit: no tx for COMMIT. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -233,7 +264,9 @@ stomp_abort(char *tx) {
     if (tx != NULL) {
         headers = stomp_frame_new_header(stomp_header_transaction, tx);
     } else {
+#if STOMP_DEBUG > 2
         PRINTA("stomp_abort: no tx for ABORT. Abort.\n");
+#endif
         stomp_frame_delete_header(headers);
         return;
     }
@@ -254,7 +287,9 @@ stomp_disconnect(char *receipt) {
 
 void
 stomp_network_sent(char *buf, int len) {
+#if STOMP_DEBUG > 2
     PRINTA("Sent: {buf=\"%s\", len=%d}.\n", buf, len);
+#endif
     stomp_sent(buf, len);
 }
 
@@ -263,7 +298,9 @@ stomp_network_received(char *buf, int len) {
     struct stomp_frame *frame = NULL;
     struct stomp_header *header = NULL;
 
+#if STOMP_DEBUG > 2
     PRINTA("Received: {buf=\"%s\", len=%d}.\n", buf, len);
+#endif
 
     frame = stomp_frame_import(buf, len);
     if (frame != NULL && frame->command != NULL) {

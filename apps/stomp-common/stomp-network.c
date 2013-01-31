@@ -93,7 +93,9 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
 
     PROCESS_BEGIN();
 
+#if STOMP_DEBUG > 3
     PRINTA("Waiting for network settings\n");
+#endif
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
     __connect(&__ipaddr, __port);
 
@@ -109,7 +111,6 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
         if (ev == tcpip_event) {
             if (uip_newdata()) {
                 if (uip_datalen() == 1 && *((char*) uip_appdata) == '\r') {
-                    PRINTA("Sent.\n");
                     __sent();
                 } else {
                     char *str = (char*) uip_appdata;
@@ -181,7 +182,9 @@ stomp_network_send(char *buf, int len) {
 
 void
 stomp_network_timedout() {
+#if STOMP_DEBUG > 3
     PRINTA("Timedout.\n");
+#endif
 }
 
 void
@@ -191,7 +194,9 @@ stomp_network_abort() {
 
 void
 stomp_network_aborted() {
+#if STOMP_DEBUG > 3
     PRINTA("Aborted.\n");
+#endif
 }
 
 void
@@ -201,6 +206,8 @@ stomp_network_close() {
 
 void
 stomp_network_closed() {
+#if STOMP_DEBUG > 3
     PRINTA("Closed.\n");
+#endif
 }
 #endif

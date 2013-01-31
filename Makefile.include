@@ -87,6 +87,18 @@ else
   CFLAGS += -DWITH_UDP=0
 endif
 
+ifdef STOMP_DEBUG
+  CFLAGS += -DSTOMP_DEBUG=$(STOMP_DEBUG)
+else
+  CFLAGS += -DSTOMP_DEBUG=0
+endif
+
+ifdef STOMP_PROFILE
+  CFLAGS += -DSTOMP_PROFILE=$(STOMP_PROFILE)
+else
+  CFLAGS += -DSTOMP_PROFILE=0
+endif
+
 CTK     = ctk.c
 CTKVNC  = $(CTK) ctk-vncserver.c libconio.c vnc-server.c vnc-out.c ctk-vncfont.c
 
