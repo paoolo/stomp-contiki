@@ -18,8 +18,8 @@
 #include <inttypes.h>
 #endif
 
-#define BUFFER_SIZE 256
-#define STOMP_TEST 5
+#define BUFFER_SIZE 1200
+#define STOMP_TEST 20
 
 #if UIP_CONF_IPV6 > 0
 int addr[] = {0xfe80, 0, 0, 0, 0, 0, 0, 1};
@@ -38,6 +38,8 @@ AUTOSTART_PROCESSES(&stomp_network_test_process, &stomp_network_process);
 
 #if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
 uint8_t sreg;
+uint16_t __t1, __t2, __t3, __t4, __count1, __count2, __count3;
+unsigned long int __sum1, __sum2, __sum3;
 
 ISR(TIMER4_OVF_vect) {
     printf("Overflow!\n");
@@ -60,8 +62,12 @@ stomp_network_sent(char *buf, int len) {
 #if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
     sreg = SREG;
     cli();
-    PRINTA("2;%" PRIu16 ";-1\n", TCNT4);
+    __t2 = TCNT4;
     SREG = sreg;
+    if (__t2 > __t1) {
+        __sum1 += (__t2 - __t1);
+        __count1 += 1;
+    }
 #endif
     process_post(&stomp_network_test_process, PROCESS_EVENT_CONTINUE, NULL);
 }
@@ -74,8 +80,12 @@ stomp_network_received(char *buf, int len) {
 #if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
     sreg = SREG;
     cli();
-    PRINTA("4;%" PRIu16 ";-1\n", TCNT4);
+    __t4 = TCNT4;
     SREG = sreg;
+    if (__t4 > __t1) {
+        __sum3 += (__t4 - __t1);
+        __count3 += 1;
+    }
 #endif
 }
 
@@ -99,7 +109,7 @@ PROCESS_THREAD(stomp_network_test_process, ev, data) {
     sreg = SREG;
     cli();
     TCCR4B = 0;
-    TIMSK4 = (1 << TOIE4);
+    // TIMSK4 = (1 << TOIE4);
     TCCR4B |= (1 << CS10);
     TCCR4B |= (1 << CS12);
     TCNT4 = 0;
@@ -121,15 +131,23 @@ PROCESS_THREAD(stomp_network_test_process, ev, data) {
     STOMP_NETWORK_CONNECT(&ipaddr, port);
 
     PRINTA("Test: Sending & Receiving.\n");
-    for (count = 1; count < BUFFER_SIZE; count++) {
+    for (count = 10; count < BUFFER_SIZE; count += 10) {
         printf("BUFFER_SIZE: %d\n", count);
+#if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
+        __sum1 = 0;
+        __sum2 = 0;
+        __sum3 = 0;
+        __count1 = 0;
+        __count2 = 0;
+        __count3 = 0;
+#endif
         for (test = 0; test < STOMP_TEST; test++) {
             buffer = NEW_ARRAY(char, count);
             _rand_buffer(buffer, count);
 #if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
             sreg = SREG;
             cli();
-            PRINTA("1;%" PRIu16 ";%d\n", TCNT4, count);
+            __t1 = TCNT4;
             SREG = sreg;
 #endif
             stomp_network_send(buffer, count);
@@ -139,11 +157,19 @@ PROCESS_THREAD(stomp_network_test_process, ev, data) {
 #if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
             sreg = SREG;
             cli();
-            PRINTA("3;%" PRIu16 ";%d\n", TCNT4, count);
+            __t3 = TCNT4;
             SREG = sreg;
+            if (__t3 > __t2) {
+                __sum2 += (__t3 - __t2);
+                __count2 += 1;
+            }
 #endif
             DELETE(buffer);
         }
+#if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
+        printf("%lu %lu %lu %u %u %u\n",
+                __sum1, __sum2, __sum3, __count1, __count2, __count3);
+#endif
     }
 
     PROCESS_END();
