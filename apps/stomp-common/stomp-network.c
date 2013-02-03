@@ -110,7 +110,7 @@ PROCESS_THREAD(stomp_network_process, ev, data) {
 #if WITH_UDP > 0
         if (ev == tcpip_event) {
             if (uip_newdata()) {
-                if (uip_datalen() == 1 && *((char*) uip_appdata) == 6) {
+                if (uip_datalen() == 1 && *((char*) uip_appdata) == '\r') {
                     __sent();
                 } else {
                     char *str = (char*) uip_appdata;
