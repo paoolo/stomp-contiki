@@ -15,6 +15,7 @@
 #elif CONTIKI_TARGET_AVR_ZIGDUINO > 0
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <inttypes.h>
 #endif
 
 #define BUFFER_SIZE 256
@@ -70,6 +71,7 @@ _rand_buffer(char *buffer, int size) {
 }
 
 #if STOMP_PROFILE > 0
+#if CONTIKI_TARGET_MINIMAL_NET > 0
 long int __profile_sum, __profile_count;
 
 static void
@@ -83,7 +85,6 @@ __profile_avg() {
     printf("%g\n", (double) __profile_sum / (double) __profile_count);
 }
 
-#if CONTIKI_TARGET_MINIMAL_NET > 0
 struct timeval __profile_tv, __profile_tv_start, __profile_tv_stop;
 struct timezone __profile_tz, __profile_tz_start, __profile_tz_stop;
 
@@ -114,73 +115,53 @@ __profile_stop() {
 }
 
 #elif CONTIKI_TARGET_AVR_ZIGDUINO > 0
+uint16_t __profile_sum, __profile_count;
+
+#define __profile_reset() \
+    __profile_sum = 0; \
+    __profile_count = 0;
+
+#define __profile_avg() \
+    printf("__profile_avg() -> %" PRIu16 " %" PRIu16 "\n", __profile_sum, __profile_count);
+
+uint8_t sreg;
 uint16_t __profile_tm, __profile_tm_start, __profile_tm_stop;
 
-static void
-__profile_print_tm() {
-    uint8_t sreg;
+#define __profile_print_tm() \
+    __profile_tm = TCNT4; \
+    printf("__profile_print_tm() -> %" PRIu16 "\n", __profile_tm);
 
-    __profile_tm = clock_seconds();
-    /*
-    cli();
-    sreg = SREG;
-    __profile_tm = TCNT1;
-    SREG = sreg;
-    sei();
-     */
+#define __profile_start() \
+    __profile_tm_start = TCNT4;
 
-#if STOMP_PROFILE > 1
-    printf("%d\n", __profile_tm);
-#endif
-}
-
-static void
-__profile_start() {
-    uint8_t sreg;
-
-    __profile_tm_start = clock_seconds();
-
-    /*
-    cli();
-    sreg = SREG;
-    __profile_tm_start = TCNT1;
-    SREG = sreg;
-    sei();
-     */
-}
-
-static void
-__profile_stop() {
-    uint8_t sreg;
-
-    __profile_tm_stop = clock_seconds();
-    /*
-    cli();
-    sreg = SREG;
-    __profile_tm_stop = TCNT1;
-    SREG = sreg;
-    sei();
-     */
-
-    __profile_sum += (__profile_tm_stop - __profile_tm_start);
+#define __profile_stop() \
+    __profile_tm_stop = TCNT4; \
+    __profile_sum += (__profile_tm_stop - __profile_tm_start); \
     __profile_count += 1;
-#if STOMP_PROFILE > 1
-    printf("%ld\n", __profile_tm_stop - __profile_tm_start);
-#endif
+
+ISR(TIMER4_OVF_vect) {
+    printf("Overflow!\n");
 }
+
 #endif
 #endif
 
 PROCESS_THREAD(stomp_network_test_process, ev, data) {
 
+    static struct etimer et;
+
     PROCESS_BEGIN();
 
 #if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
+    TCCR4B = 0;
+    TIMSK4 = (1 << TOIE4);
+    TCCR4B |= (1 << CS10);
+    TCCR4B |= (1 << CS12);
+    TCNT4 = 0;
+
     __profile_tm = 0;
     __profile_tm_start = 0;
     __profile_tm_stop = 0;
-
-    __profile_print_tm();
 #endif
 
 #if UIP_CONF_IPV6 > 0
@@ -189,21 +170,23 @@ PROCESS_THREAD(stomp_network_test_process, ev, data) {
     uip_ipaddr(&ipaddr, addr[0], addr[1], addr[2], addr[3]);
 #endif
 
+#if CONTIKI_TARGET_MINIMAL_NET > 0
     PRINTA("Start. Press any key...\n");
     getchar();
+#endif
 
 #if STOMP_DEBUG > 1
     PRINTA("Waiting for connection...\n");
 #endif
     STOMP_NETWORK_CONNECT(&ipaddr, port);
-
 #if STOMP_DEBUG > 0
     PRINTA("Test: Sending & Receiving.\n");
 #endif
-
     for (count = 1; count < BUFFER_SIZE; count++) {
-#if STOMP_PROFILE > 0
+#if STOMP_DEBUG > 0
         printf("BUFFER_SIZE: %d\n", count);
+#endif
+#if STOMP_PROFILE > 0
         __profile_reset();
 #endif
         for (test = 0; test < STOMP_TEST; test++) {
@@ -213,7 +196,9 @@ PROCESS_THREAD(stomp_network_test_process, ev, data) {
             __profile_start();
 #endif
             stomp_network_send(buffer, count);
-            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
+            etimer_set(&et, 250);
+            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE || ev == PROCESS_EVENT_TIMER);
+            if (ev != PROCESS_EVENT_TIMER) etimer_stop(&et);
 #if STOMP_PROFILE > 0
             __profile_stop();
 #endif

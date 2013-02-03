@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #endif
 
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 100
 #define STOMP_TEST 10
 
 #if UIP_CONF_IPV6 > 0
@@ -111,6 +111,7 @@ char buffer[BUFFER_SIZE];
 #define COLON "\x3a"
 
 #if STOMP_PROFILE > 0
+#if CONTIKI_TARGET_MINIMAL_NET > 0
 long int __profile_sum, __profile_count;
 
 static void
@@ -124,7 +125,6 @@ __profile_avg() {
     printf("%g\n", (double) __profile_sum / (double) __profile_count);
 }
 
-#if CONTIKI_TARGET_MINIMAL_NET > 0
 struct timeval __profile_tv, __profile_tv_start, __profile_tv_stop;
 struct timezone __profile_tz, __profile_tz_start, __profile_tz_stop;
 
@@ -155,36 +155,64 @@ __profile_stop() {
 }
 
 #elif CONTIKI_TARGET_AVR_ZIGDUINO > 0
-long int __profile_tm, __profile_tm_start, __profile_tm_stop;
+uint16_t __profile_sum, __profile_count;
 
-static void
-__profile_print_tm() {
-    __profile_tm = TCNT1;
-#if STOMP_PROFILE > 1
-    printf("%ld\n", __profile_tm);
-#endif
-}
+#define __profile_reset() \
+    __profile_sum = 0; \
+    __profile_count = 0;
 
-static void
-__profile_start() {
-    __profile_tm_start = TCNT1;
-}
+#define __profile_avg() \
+    printf("__profile_avg() -> %" PRIu16 " %" PRIu16 "\n", __profile_sum, __profile_count);
 
-static void
-__profile_stop() {
-    __profile_tm_stop = TCNT1;
-    __profile_sum += (__profile_tm_stop - __profile_tm_start);
+uint8_t sreg;
+uint16_t __profile_tm, __profile_tm_start, __profile_tm_stop;
+
+#define __profile_print_tm() \
+    sreg = SREG; \
+    cli(); \
+    __profile_tm = TCNT4; \
+    SREG = sreg; \
+    printf("__profile_print_tm() -> %" PRIu16 "\n", __profile_tm);
+
+#define __profile_start() \
+    sreg = SREG; \
+    cli(); \
+    __profile_tm_start = TCNT4; \
+    SREG = sreg;
+
+#define __profile_stop() \
+    sreg = SREG; \
+    cli(); \
+    __profile_tm_stop = TCNT4; \
+    SREG = sreg; \
+    __profile_sum += (__profile_tm_stop - __profile_tm_start); \
     __profile_count += 1;
-#if STOMP_PROFILE > 1
-    printf("%ld\n", __profile_tm_stop - __profile_tm_start);
-#endif
+
+ISR(TIMER4_OVF_vect) {
+    printf("Overflow!\n");
 }
+
 #endif
 #endif
 
 PROCESS_THREAD(stomp_test_process, ev, data) {
 
     PROCESS_BEGIN();
+
+#if STOMP_PROFILE > 0 && CONTIKI_TARGET_AVR_ZIGDUINO > 0
+    sreg = SREG;
+    cli();
+    TCCR4B = 0;
+    TIMSK4 = (1 << TOIE4);
+    TCCR4B |= (1 << CS10);
+    TCCR4B |= (1 << CS12);
+    TCNT4 = 0;
+    SREG = sreg;
+
+    __profile_tm = 0;
+    __profile_tm_start = 0;
+    __profile_tm_stop = 0;
+#endif
 
 #if UIP_CONF_IPV6 > 0
     uip_ip6addr(&ipaddr, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
@@ -249,8 +277,10 @@ PROCESS_THREAD(stomp_test_process, ev, data) {
     STOMP_REGISTER_STOMP_ERROR(_stomp_error);
     STOMP_REGISTER_STOMP_RECEIPT(_stomp_receipt);
 
+#if CONTIKI_TARGET_MINIMAL_NET > 0
     PRINTA("Start. Press any key...\n");
     getchar();
+#endif
 
 #if STOMP_DEBUG > 1
     PRINTA("Waiting for connection...\n");
